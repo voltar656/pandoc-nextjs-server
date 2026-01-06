@@ -34,6 +34,11 @@ const referenceLocationOptions = [
   { id: "block", label: "End of block" },
 ];
 
+const captionPositionOptions = [
+  { id: "below", label: "Below" },
+  { id: "above", label: "Above" },
+];
+
 export const UploadStep: FC<IProps> = ({ onUpload }) => {
   const [css] = useStyletron();
   const [errorMessage, setErrorMessage] = useState("");
@@ -49,6 +54,8 @@ export const UploadStep: FC<IProps> = ({ onUpload }) => {
   const [numberSections, setNumberSections] = useState(false);
   const [embedResources, setEmbedResources] = useState(false);
   const [referenceLocation, setReferenceLocation] = useState<Value>([referenceLocationOptions[0]]);
+  const [figureCaptionPosition, setFigureCaptionPosition] = useState<Value>([captionPositionOptions[0]]);
+  const [tableCaptionPosition, setTableCaptionPosition] = useState<Value>([captionPositionOptions[1]]);
 
   const handleUploadProgress = useCallback((progressEvent) => {
     setProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));
@@ -90,6 +97,12 @@ export const UploadStep: FC<IProps> = ({ onUpload }) => {
       if (referenceLocation[0]) {
         data.append("referenceLocation", (referenceLocation[0] as any).id);
       }
+      if (figureCaptionPosition[0]) {
+        data.append("figureCaptionPosition", (figureCaptionPosition[0] as any).id);
+      }
+      if (tableCaptionPosition[0]) {
+        data.append("tableCaptionPosition", (tableCaptionPosition[0] as any).id);
+      }
 
       axios
         .post("/api/upload", data, {
@@ -109,7 +122,7 @@ export const UploadStep: FC<IProps> = ({ onUpload }) => {
         });
       setErrorMessage("");
     },
-    [onUpload, destFormat, sourceFormat, templateFile, toc, tocDepth, numberSections, embedResources, referenceLocation]
+    [onUpload, destFormat, sourceFormat, templateFile, toc, tocDepth, numberSections, embedResources, referenceLocation, figureCaptionPosition, tableCaptionPosition]
   );
 
   const handleCancel = useCallback(() => {
@@ -215,6 +228,24 @@ export const UploadStep: FC<IProps> = ({ onUpload }) => {
               options={referenceLocationOptions}
               value={referenceLocation}
               onChange={({ value }) => setReferenceLocation(value)}
+              clearable={false}
+              size="compact"
+            />
+          </FormControl>
+          <FormControl label="Figure Caption Position:">
+            <Select
+              options={captionPositionOptions}
+              value={figureCaptionPosition}
+              onChange={({ value }) => setFigureCaptionPosition(value)}
+              clearable={false}
+              size="compact"
+            />
+          </FormControl>
+          <FormControl label="Table Caption Position:">
+            <Select
+              options={captionPositionOptions}
+              value={tableCaptionPosition}
+              onChange={({ value }) => setTableCaptionPosition(value)}
               clearable={false}
               size="compact"
             />

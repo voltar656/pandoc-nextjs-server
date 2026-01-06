@@ -77,6 +77,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const numberSections = fields.numberSections === "true";
     const embedResources = fields.embedResources === "true";
     const referenceLocation = typeof fields.referenceLocation === "string" ? fields.referenceLocation : undefined;
+    const figureCaptionPosition = typeof fields.figureCaptionPosition === "string" ? fields.figureCaptionPosition : undefined;
+    const tableCaptionPosition = typeof fields.tableCaptionPosition === "string" ? fields.tableCaptionPosition : undefined;
 
     if (!mainFilePath) {
       res.json({
@@ -98,6 +100,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       numberSections,
       embedResources,
       referenceLocation,
+      figureCaptionPosition,
+      tableCaptionPosition,
       date: new Date().toISOString(),
     };
     writeMetaFile(status).then((err) => {

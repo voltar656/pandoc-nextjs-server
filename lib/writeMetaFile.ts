@@ -15,6 +15,8 @@ export interface IStatus {
   numberSections?: boolean;
   embedResources?: boolean;
   referenceLocation?: string;
+  figureCaptionPosition?: string;
+  tableCaptionPosition?: string;
   // Status
   date: string;
   scrapbox?: boolean;

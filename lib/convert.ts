@@ -42,6 +42,12 @@ export async function convert(
   if (status.referenceLocation) {
     args.push("--reference-location", status.referenceLocation);
   }
+  if (status.figureCaptionPosition) {
+    args.push("--figure-caption-position", status.figureCaptionPosition);
+  }
+  if (status.tableCaptionPosition) {
+    args.push("--table-caption-position", status.tableCaptionPosition);
+  }
 
   // convert with pandoc
   return pandoc(src, dest, format, args).then((res) => {

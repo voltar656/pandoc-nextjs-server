@@ -59,6 +59,8 @@ interface PandocOptions {
   numberSections?: boolean;
   embedResources?: boolean;
   referenceLocation?: string;
+  figureCaptionPosition?: string;
+  tableCaptionPosition?: string;
 }
 
 async function runPandoc(
@@ -104,6 +106,12 @@ async function runPandoc(
     if (options.referenceLocation) {
       args.push("--reference-location", options.referenceLocation);
     }
+    if (options.figureCaptionPosition) {
+      args.push("--figure-caption-position", options.figureCaptionPosition);
+    }
+    if (options.tableCaptionPosition) {
+      args.push("--table-caption-position", options.tableCaptionPosition);
+    }
 
     args.push("-o", dest);
 
@@ -136,7 +144,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   // Parse query params
-  const { from, to, toc, tocDepth, numberSections, embedResources, referenceLocation } = req.query;
+  const { from, to, toc, tocDepth, numberSections, embedResources, referenceLocation, figureCaptionPosition, tableCaptionPosition } = req.query;
   if (typeof from !== "string" || typeof to !== "string") {
     res.status(400).json({
       success: false,
@@ -152,6 +160,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     numberSections: numberSections === "true",
     embedResources: embedResources === "true",
     referenceLocation: typeof referenceLocation === "string" ? referenceLocation : undefined,
+    figureCaptionPosition: typeof figureCaptionPosition === "string" ? figureCaptionPosition : undefined,
+    tableCaptionPosition: typeof tableCaptionPosition === "string" ? tableCaptionPosition : undefined,
   };
 
   // Parse multipart form
