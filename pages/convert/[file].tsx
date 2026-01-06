@@ -99,8 +99,7 @@ const Index: NextPage = () => {
           <HeadingSmall marginTop="0">File conversion status</HeadingSmall>
           <UploadStatus status={status} onDownload={handleDownload} />
           <ParagraphMedium padding=".2em">
-            Once the file is ready, the button above gets enabled. The
-            conversion status is updated every second.
+            Once the file is ready, the button above gets enabled.
           </ParagraphMedium>
         </>
       )}
