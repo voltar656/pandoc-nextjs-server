@@ -12,7 +12,7 @@ export const Header: FC = () => {
     <HeaderNavigation>
       <StyledNavigationList $align={ALIGN.left}>
         <StyledNavigationItem>
-          <StyledLink href="/">pandoc-nextjs-server</StyledLink>
+          <StyledLink href="/">pandoc-nextjs-extended</StyledLink>
         </StyledNavigationItem>
       </StyledNavigationList>
     </HeaderNavigation>
