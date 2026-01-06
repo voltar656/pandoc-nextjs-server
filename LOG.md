@@ -107,3 +107,41 @@ curl -X POST -F "file=@book.epub" \
 ### Next Steps
 - Priority 2: Container setup with supervisord
 - Priority 3: Web UI updates (source format dropdown, template upload)
+
+## 2026-01-06T18:35:34+00:00
+
+### Summary
+Completed Priority 3: Web UI enhancements and Priority 4: Documentation.
+
+### Completed
+- Added source format dropdown to Web UI
+  - Options: Markdown, GFM, HTML, EPUB, DOCX, LaTeX, RST
+- Added template file picker (conditional, shows for DOCX/ODT output)
+- Updated upload API to handle `sourceFormat` and `template` fields
+- Updated convert flow to pass source format and template to pandoc
+- Renamed project to `pandoc-nextjs-extended`
+- Removed "Fork me on GitHub" banner
+- Updated README with full API documentation
+- Updated LICENSE with copyright attribution
+
+### Files Changed
+- `lib/config.ts` - added sourceFormats array
+- `lib/convert.ts` - pass source format and template to pandoc
+- `lib/writeMetaFile.ts` - added sourceFormat and templatePath to IStatus
+- `pages/api/upload.ts` - handle template file and source format
+- `components/UploadStep.tsx` - added source format and template UI
+- `components/SourceFormatSelect.tsx` - new component
+- `components/Layout.tsx` - renamed, removed GitHub ribbon
+- `components/Header.tsx` - renamed
+- `package.json` - renamed
+- `README.md` - full API documentation
+- `LICENSE` - added copyright
+
+### Status
+- Priority 1: API Endpoint ✅
+- Priority 2: Container Setup (supervisord) - skipped, works without
+- Priority 3: Web UI Updates ✅
+- Priority 4: Documentation ✅
+
+### Live
+https://oboe-alpha.exe.xyz:8000/
