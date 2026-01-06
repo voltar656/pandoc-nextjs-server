@@ -1,35 +1,96 @@
-## pandoc-nextjs-server
+# pandoc-nextjs-extended
 
-[![Build and deploy Docker app to Azure](https://github.com/arcatdmz/pandoc-nextjs-server/workflows/Build%20and%20deploy%20Docker%20app%20to%20Azure/badge.svg)](https://github.com/arcatdmz/pandoc-nextjs-server/actions?query=workflow%3Adeploy)
+A web UI and API for [Pandoc](https://pandoc.org/) document conversion.
 
-### A simple web UI for [Pandoc](https://pandoc.org/)
+Based on [arcatdmz/pandoc-nextjs-server](https://github.com/arcatdmz/pandoc-nextjs-server), extended with a REST API for pipeline integration.
 
-Upload, convert, and download the file with ease.
+## Features
 
-- Demo site: https://pandoc.digitalmuseum.jp
-- Docker image: [arcatdmz/pandoc-nextjs-server](http://hub.docker.com/repository/docker/arcatdmz/pandoc-nextjs-server) (built with [GitHub Actions]())
+- **Web UI**: Upload, convert, and download files through a browser interface
+- **REST API**: Synchronous conversion endpoint for workflow automation
+- **Template Support**: Use reference documents for consistent DOCX/ODT styling
+- **Multiple Formats**: Supports all Pandoc formats (markdown, docx, epub, html, pdf, etc.)
 
-![Screenshot](https://i.gyazo.com/9ad5ea13216154750470b0659157facb.png)
-
-#### How to use
-
-1. `git clone`
+## Quick Start
 
 ```sh
-git clone https://github.com/arcatdmz/pandoc-nextjs-server.git
-cd pandoc-nextjs-server
+# Build the image
+docker build -t pandoc-nextjs-extended .
+
+# Run the container
+docker run -p 3000:3000 -d --name pandoc pandoc-nextjs-extended
 ```
 
-2. Build a docker image
+- Web UI: http://localhost:3000
+- API: http://localhost:3000/api/convert
+
+## API Reference
+
+### Health Check
 
 ```sh
-docker build -t pandoc-nextjs-server .
-docker run -p 3000:3000 -it --rm --name pns pandoc-nextjs-server
+GET /api/health
 ```
 
-3. Go to http://localhost:3000
-4. Have fun!
+Response:
+```json
+{"status": "ok", "pandoc": "3.8.3"}
+```
+
+### Convert Document
+
+```sh
+POST /api/convert?from=<format>&to=<format>
+```
+
+**Query Parameters:**
+- `from` (required): Source format (e.g., `markdown`, `epub`, `html`, `docx`)
+- `to` (required): Target format (e.g., `docx`, `markdown`, `pdf`, `html`)
+
+**Form Fields:**
+- `file` (required): The file to convert
+- `template` (optional): Reference document for styling (docx/odt output)
+
+**Response:**
+- Success: Binary file with appropriate Content-Type
+- Error: `{"success": false, "error": "..."}`
+
+### Examples
+
+```sh
+# Markdown to DOCX
+curl -X POST -F "file=@document.md" \
+  "http://localhost:3000/api/convert?from=markdown&to=docx" \
+  -o output.docx
+
+# Markdown to DOCX with custom template
+curl -X POST -F "file=@document.md" -F "template=@reference.docx" \
+  "http://localhost:3000/api/convert?from=markdown&to=docx" \
+  -o output.docx
+
+# EPUB to Markdown
+curl -X POST -F "file=@book.epub" \
+  "http://localhost:3000/api/convert?from=epub&to=markdown" \
+  -o output.md
+
+# HTML to PDF
+curl -X POST -F "file=@page.html" \
+  "http://localhost:3000/api/convert?from=html&to=pdf" \
+  -o output.pdf
+```
+
+## Supported Formats
+
+See Pandoc documentation for full list:
+- Input: `pandoc --list-input-formats`
+- Output: `pandoc --list-output-formats`
+
+Common formats: markdown, gfm, html, docx, epub, pdf, rst, latex, odt, rtf
+
+## License
+
+MIT
 
 ---
 
-(c) Jun Kato 2020-2021
+Original project (c) Jun Kato 2020-2021
