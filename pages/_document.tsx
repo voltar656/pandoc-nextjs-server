@@ -1,6 +1,11 @@
 import Document, { Head, Main, NextScript } from "next/document";
 import { Provider as StyletronProvider } from "styletron-react";
-import { Server, Sheet } from "styletron-engine-atomic";
+import { Server } from "styletron-engine-atomic";
+
+interface Sheet {
+  css: string;
+  attrs: { media?: string; "data-hydrate"?: string };
+}
 import { styletron } from "../lib/styletron";
 
 class MyDocument extends Document<{ stylesheets: Sheet[] }> {

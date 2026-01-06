@@ -1,22 +1,22 @@
 # Tasks
 
-## Priority 1: API Endpoint
+## Priority 1: API Endpoint ✅
 
-- [ ] Create `pages/api/convert.ts`
-  - [ ] Parse query params (`from`, `to`) - both required
-  - [ ] Handle multipart form: `file` (required), `template` (optional)
-  - [ ] Write temp files, run pandoc with appropriate args, stream result, cleanup
-  - [ ] Support `--reference-doc` for docx/odt templates
-  - [ ] Return appropriate Content-Type and Content-Disposition headers
-  - [ ] Return JSON error on failure
+- [x] Create `pages/api/convert.ts`
+  - [x] Parse query params (`from`, `to`) - both required
+  - [x] Handle multipart form: `file` (required), `template` (optional)
+  - [x] Write temp files, run pandoc with appropriate args, stream result, cleanup
+  - [x] Support `--reference-doc` for docx/odt templates
+  - [x] Return appropriate Content-Type and Content-Disposition headers
+  - [x] Return JSON error on failure
 
-- [ ] Create `pages/api/health.ts`
-  - [ ] Return status and pandoc version
+- [x] Create `pages/api/health.ts`
+  - [x] Return status and pandoc version
 
-- [ ] Test with curl:
-  - [ ] markdown → docx
-  - [ ] markdown → docx with template
-  - [ ] epub → markdown
+- [x] Test with curl:
+  - [x] markdown → docx
+  - [x] markdown → docx with template
+  - [x] epub → markdown
 
 ## Priority 2: Container Setup
 

@@ -17,8 +17,8 @@ export const config = {
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   // use formidable to parse form data
   const form = new IncomingForm();
-  form.uploadDir = appConfig.uploadDir;
-  form.keepExtensions = true;
+  (form as any).uploadDir = appConfig.uploadDir;
+  (form as any).keepExtensions = true;
   let originalName: string = "";
   form.on("fileBegin", (_name: string, file) => {
     // rename the uploaded file using UUID v4
@@ -26,7 +26,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const ext = extname(file.name);
     const name = `${uuidv4()}${ext}`;
     file.name = name;
-    file.path = resolve(form.uploadDir, name);
+    file.path = resolve((form as any).uploadDir, name);
   });
 
   form.parse(req, (err, fields, filesMap) => {

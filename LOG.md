@@ -59,3 +59,51 @@ Evaluated pandoc-server vs custom endpoint for API implementation.
 - Implement `pages/api/convert.ts` with template support
 - Implement `pages/api/health.ts`
 - Test with curl
+
+## 2026-01-06T15:59:54+00:00
+
+### Summary
+Implemented Priority 1: API endpoints for conversion and health check.
+
+### Completed
+- Created `pages/api/convert.ts` - synchronous conversion endpoint
+  - Accepts `from` and `to` query params (required)
+  - Accepts `file` (required) and `template` (optional) form fields
+  - Supports `--reference-doc` for docx/odt templates
+  - Streams result with appropriate Content-Type/Disposition headers
+  - Cleans up temp files after response
+- Created `pages/api/health.ts` - returns status and pandoc version
+- Fixed type errors in existing code (`_document.tsx`, `upload.ts`) for formidable v1 compatibility
+- Updated Dockerfile for `pandoc/extra` base with Node.js 18
+- Added `NODE_OPTIONS=--openssl-legacy-provider` for old webpack compatibility
+
+### API Examples
+```bash
+# Health check
+curl http://localhost:8000/api/health
+# {"status":"ok","pandoc":"3.8.3"}
+
+# Markdown to DOCX
+curl -X POST -F "file=@input.md" \
+  "http://localhost:8000/api/convert?from=markdown&to=docx" -o output.docx
+
+# With template
+curl -X POST -F "file=@input.md" -F "template=@reference.docx" \
+  "http://localhost:8000/api/convert?from=markdown&to=docx" -o output.docx
+
+# EPUB to Markdown  
+curl -X POST -F "file=@book.epub" \
+  "http://localhost:8000/api/convert?from=epub&to=markdown" -o output.md
+```
+
+### Files Changed
+- `pages/api/convert.ts` - new file
+- `pages/api/health.ts` - new file
+- `pages/api/upload.ts` - type fixes
+- `pages/_document.tsx` - type fixes
+- `Dockerfile` - updated for pandoc/extra + Node 18
+- `TASKS.md` - marked Priority 1 complete
+
+### Next Steps
+- Priority 2: Container setup with supervisord
+- Priority 3: Web UI updates (source format dropdown, template upload)
