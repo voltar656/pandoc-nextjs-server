@@ -44,7 +44,7 @@ export const getServerSideProps: GetServerSideProps<IProps> = async (ctx) => {
   const { file } = ctx.query;
   if (typeof file === "string") {
     try {
-      const res = await axios.get("http://localhost:3000/api/status", {
+      const res = await axios.get("http://127.0.0.1:3000/api/status", {
         params: {
           file,
         },
