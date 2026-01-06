@@ -25,11 +25,11 @@
 - [ ] Expose port 3000 (API is part of Next.js)
 - [ ] Build and test image
 
-## Priority 3: Web UI Updates
+## Priority 3: Web UI Updates ✅
 
-- [ ] Add source format dropdown
-- [ ] Add template upload option
-- [ ] Remove or keep PDF option (now supported)
+- [x] Add source format dropdown
+- [x] Add template upload option
+- [x] Keep PDF option (supported)
 
 ## Priority 4: Documentation
 

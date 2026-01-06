@@ -7,6 +7,8 @@ export interface IStatus {
   name: string;
   originalName: string;
   format: string;
+  sourceFormat?: string;
+  templatePath?: string;
   date: string;
   scrapbox?: boolean;
   success?: boolean;

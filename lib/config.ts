@@ -2,6 +2,15 @@ import { IScrapboxOptions } from "./scrapbox";
 
 export default {
   uploadDir: "uploads",
+  sourceFormats: [
+    { id: "Markdown (.md)", value: "markdown" },
+    { id: "GitHub-Flavored Markdown (.md)", value: "gfm" },
+    { id: "HTML (.html)", value: "html" },
+    { id: "EPUB (.epub)", value: "epub" },
+    { id: "Microsoft Word (.docx)", value: "docx" },
+    { id: "LaTeX (.tex)", value: "latex" },
+    { id: "reStructuredText (.rst)", value: "rst" },
+  ],
   formats: [
     { id: "Adobe PDF (.pdf)", value: "pdf", mime: "application/pdf" },
     { id: "HTML (.html)", value: "html", mime: "text/html" },

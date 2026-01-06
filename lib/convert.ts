@@ -18,8 +18,17 @@ export async function convert(
     return;
   }
 
+  // Build pandoc args
+  const args: string[] = [];
+  if (status.sourceFormat) {
+    args.push("-f", status.sourceFormat);
+  }
+  if (status.templatePath && (format === "docx" || format === "odt")) {
+    args.push("--reference-doc", status.templatePath);
+  }
+
   // convert with pandoc
-  return pandoc(src, dest, format, []).then((res) => {
+  return pandoc(src, dest, format, args).then((res) => {
     status.success = res.success;
     status.error = res.error;
     status.result = res.result;

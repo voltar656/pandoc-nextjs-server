@@ -19,14 +19,29 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const form = new IncomingForm();
   (form as any).uploadDir = appConfig.uploadDir;
   (form as any).keepExtensions = true;
+  (form as any).multiples = true;
+
   let originalName: string = "";
-  form.on("fileBegin", (_name: string, file) => {
-    // rename the uploaded file using UUID v4
-    originalName = file.name;
+  let mainFilePath: string = "";
+  let mainFileName: string = "";
+  let templatePath: string | undefined;
+
+  form.on("fileBegin", (fieldName: string, file: any) => {
     const ext = extname(file.name);
     const name = `${uuidv4()}${ext}`;
-    file.name = name;
-    file.path = resolve((form as any).uploadDir, name);
+    
+    if (fieldName === "template") {
+      file.name = name;
+      file.path = resolve((form as any).uploadDir, name);
+      templatePath = file.path;
+    } else {
+      // Main file
+      originalName = file.name;
+      file.name = name;
+      file.path = resolve((form as any).uploadDir, name);
+      mainFilePath = file.path;
+      mainFileName = name;
+    }
   });
 
   form.parse(req, (err, fields, filesMap) => {
@@ -53,29 +68,24 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return;
     }
 
-    // check uploaded files
-    const files = Object.values(filesMap);
-    if (files.length > 1) {
-      Promise.all(files.map((file) => new Promise((r) => !Array.isArray(file) && unlink(file.path, r))))
-        .catch((_err) => {
-          // do nothing for file deletion errors
-        })
-        .finally(() =>
-          res.json({
-            success: false,
-            error: "Multiple files were uploaded",
-          })
-        );
+    // Get source format (optional)
+    const sourceFormat = typeof fields.sourceFormat === "string" ? fields.sourceFormat : undefined;
+
+    if (!mainFilePath) {
+      res.json({
+        success: false,
+        error: "No file uploaded",
+      });
       return;
     }
-    const file = !Array.isArray(files[0]) && files[0] || { name: null, path: null };
-    const { name, path } = file;
 
     // write meta file
     const status: IStatus = {
-      name,
+      name: mainFileName,
       originalName,
       format: format.value,
+      sourceFormat,
+      templatePath,
       date: new Date().toISOString(),
     };
     writeMetaFile(status).then((err) => {
@@ -85,22 +95,21 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           success: false,
           error: "Writing a meta file failed",
         });
-        unlink(path, (_err) => {
-          // do nothing on clean up error
-        });
+        unlink(mainFilePath, (_err) => {});
+        if (templatePath) unlink(templatePath, (_err) => {});
         return;
       }
 
       // return the name of the uploaded file
       res.json({
         success: true,
-        name,
+        name: mainFileName,
       });
 
       // start conversion
       convert(
-        path,
-        `${path}.${format.ext || format.value}`,
+        mainFilePath,
+        `${mainFilePath}.${format.ext || format.value}`,
         format.value,
         status
       );
