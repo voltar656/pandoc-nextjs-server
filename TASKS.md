@@ -1,35 +1,42 @@
 # Tasks
 
-## API Endpoint
+## Priority 1: API Endpoint
 
-- [ ] Create `pages/api/convert.ts` - synchronous conversion endpoint
+- [ ] Create `pages/api/convert.ts`
   - [ ] Parse query params (`from`, `to`) - both required
-  - [ ] Validate formats against pandoc's supported formats
-  - [ ] Handle raw body input (`text/plain`, `application/octet-stream`)
-  - [ ] Handle multipart form input (`file` field)
-  - [ ] Write temp file, run pandoc, stream result, cleanup
+  - [ ] Handle multipart form: `file` (required), `template` (optional)
+  - [ ] Write temp files, run pandoc with appropriate args, stream result, cleanup
+  - [ ] Support `--reference-doc` for docx/odt templates
   - [ ] Return appropriate Content-Type and Content-Disposition headers
   - [ ] Return JSON error on failure
 
-- [ ] Add tests / manual verification with curl
+- [ ] Create `pages/api/health.ts`
+  - [ ] Return status and pandoc version
 
-## Web UI Enhancement
+- [ ] Test with curl:
+  - [ ] markdown → docx
+  - [ ] markdown → docx with template
+  - [ ] epub → markdown
 
-- [ ] Add source format dropdown to `components/UploadStep.tsx`
-  - [ ] Create `SourceFormatSelect` component (or extend `FileFormatSelect`)
-  - [ ] Pass source format to upload API
+## Priority 2: Container Setup
 
-- [ ] Update `pages/api/upload.ts` to accept optional `fromFormat` field
+- [ ] Install supervisord in Dockerfile
+- [ ] Create supervisord.conf to manage Next.js on port 3000
+- [ ] Expose port 3000 (API is part of Next.js)
+- [ ] Build and test image
 
-- [ ] Update `lib/convert.ts` to use specified source format in pandoc call
+## Priority 3: Web UI Updates
 
-## Documentation
+- [ ] Add source format dropdown
+- [ ] Add template upload option
+- [ ] Remove or keep PDF option (now supported)
+
+## Priority 4: Documentation
 
 - [ ] Update README.md with API usage examples
 
-## Optional / Future
+## Future
 
-- [ ] Add rate limiting to API endpoint
-- [ ] Add file size limits
-- [ ] Support reference doc templates for DOCX styling
-- [ ] Async mode with webhook callback for large files
+- [ ] Rate limiting
+- [ ] File size limits
+- [ ] Consolidate logging

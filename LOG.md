@@ -27,3 +27,35 @@ Initial setup for extending pandoc-nextjs-server with a pipeline-friendly API.
 - Implement `pages/api/convert.ts`
 - Build and test Docker image with new base
 - Test API with curl
+
+## 2026-01-06T15:47:39+00:00
+
+### Summary
+Evaluated pandoc-server vs custom endpoint for API implementation.
+
+### Investigation
+- Tested `pandoc-server` built-in API (runs via `pandoc-server --port 3000`)
+- Confirmed it works for basic conversions (markdown→docx, epub→markdown)
+- Discovered `pandoc-server` blocks filesystem access for security
+- **Blocker:** `reference-doc` templates not supported in pandoc-server ("File not found in resource path" error regardless of file location)
+
+### Decision
+- Rejected pandoc-server due to template requirement
+- Chose custom `/api/convert` endpoint that shells out to pandoc
+- Full feature support: templates, PDF, filters
+- Trade-off: must manage temp file security separately
+
+### Plan Updates
+- `PLANNING.md`: Revised to custom endpoint with template support
+- `TASKS.md`: Reprioritized - API endpoint first, then container setup with supervisord
+
+### Architecture
+- Single container, single port (3000)
+- Next.js serves both web UI and API (`pages/api/convert.ts`)
+- Supervisord manages Next.js process
+- Health endpoint at `/api/health`
+
+### Next Steps
+- Implement `pages/api/convert.ts` with template support
+- Implement `pages/api/health.ts`
+- Test with curl

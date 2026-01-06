@@ -1,15 +1,7 @@
 # Pandoc API Extension Plan
 
 ## Goal
-Add a synchronous API endpoint for use in workflow pipelines (microservice-style), focused on markdown → DOCX conversion.
-
-## Current Architecture
-The existing app uses a 3-step async flow:
-1. `POST /api/upload` - Upload file + format, returns UUID filename
-2. `GET /api/status?file=<name>` - Poll for conversion status
-3. `GET /api/download?file=<name>&ext=<ext>` - Download converted file
-
-This is fine for the web UI but awkward for pipeline integration.
+Add a synchronous API endpoint for use in workflow pipelines (microservice-style).
 
 ## Proposed API
 
@@ -17,11 +9,12 @@ This is fine for the web UI but awkward for pipeline integration.
 Synchronous, single-request conversion endpoint.
 
 **Request:**
-- Body: Raw content (`Content-Type: text/markdown`, `text/plain`, or `application/octet-stream`)
-- OR: Multipart form with `file` field (`Content-Type: multipart/form-data`)
+- Body: Multipart form with `file` field
 - Query params:
   - `from` - Source format (required, e.g. `markdown`, `epub`, `html`)
   - `to` - Destination format (required, e.g. `docx`, `markdown`, `pdf`)
+- Optional form fields:
+  - `template` - Reference doc file (e.g., .docx template for styling)
 
 **Response:**
 - Success: Binary file with appropriate Content-Type and Content-Disposition headers
@@ -29,35 +22,39 @@ Synchronous, single-request conversion endpoint.
 
 **Example usage:**
 ```bash
-# Markdown to DOCX (raw body)
-curl -X POST -H "Content-Type: text/plain" \
-  --data-binary @input.md \
-  "http://localhost:8000/api/convert?from=markdown&to=docx" \
+# Markdown to DOCX
+curl -X POST -F "file=@input.md" \
+  "http://localhost:3001/api/convert?from=markdown&to=docx" \
   -o output.docx
 
-# EPUB to Markdown (multipart form)
+# Markdown to DOCX with template
+curl -X POST -F "file=@input.md" -F "template=@reference.docx" \
+  "http://localhost:3001/api/convert?from=markdown&to=docx" \
+  -o output.docx
+
+# EPUB to Markdown
 curl -X POST -F "file=@book.epub" \
-  "http://localhost:8000/api/convert?from=epub&to=markdown" \
+  "http://localhost:3001/api/convert?from=epub&to=markdown" \
   -o output.md
-
-# HTML to DOCX
-curl -X POST -F "file=@page.html" \
-  "http://localhost:8000/api/convert?from=html&to=docx" \
-  -o output.docx
 ```
 
-## Web UI Enhancement
-Add a dropdown to explicitly select source format (markdown, HTML, etc.) rather than relying on auto-detection. This makes the md→DOCX workflow more explicit.
+### `GET /api/health`
+Health check endpoint.
 
-## Supported Formats
-Pass `from` and `to` directly to pandoc - supports all pandoc formats:
-- **Input:** markdown, gfm, html, epub, rst, docx, latex, etc.
-- **Output:** docx, markdown, pdf, html, rst, rtf, epub, etc.
+**Response:**
+```json
+{ "status": "ok", "pandoc": "3.x.x" }
+```
 
-See `pandoc --list-input-formats` and `pandoc --list-output-formats` for full list.
+## Architecture
+Single container running both:
+- **Port 3000:** Next.js web UI (existing)
+- **Port 3001:** Next.js API server (or separate Express server)
+
+Use supervisord to manage processes.
 
 ## Implementation Notes
-- Reuse existing `lib/pandoc.ts` for conversion
+- Custom endpoint shells out to pandoc
 - Temp files in `uploads/` directory, cleaned up after response
-- No meta files needed for sync API (stateless)
-- Consider timeout for large conversions
+- Template files uploaded per-request, also cleaned up
+- Full pandoc feature support (PDF, filters, templates)
