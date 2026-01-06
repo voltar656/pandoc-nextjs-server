@@ -26,6 +26,22 @@ export async function convert(
   if (status.templatePath && (format === "docx" || format === "odt")) {
     args.push("--reference-doc", status.templatePath);
   }
+  // Advanced options
+  if (status.toc) {
+    args.push("--toc");
+    if (status.tocDepth) {
+      args.push("--toc-depth", String(status.tocDepth));
+    }
+  }
+  if (status.numberSections) {
+    args.push("--number-sections");
+  }
+  if (status.embedResources) {
+    args.push("--embed-resources", "--standalone");
+  }
+  if (status.referenceLocation) {
+    args.push("--reference-location", status.referenceLocation);
+  }
 
   // convert with pandoc
   return pandoc(src, dest, format, args).then((res) => {

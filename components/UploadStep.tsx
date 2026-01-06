@@ -3,6 +3,9 @@ import axios from "axios";
 import { FormControl } from "baseui/form-control";
 import { FileUploader } from "baseui/file-uploader";
 import { Button } from "baseui/button";
+import { Checkbox, LABEL_PLACEMENT } from "baseui/checkbox";
+import { Select, Value } from "baseui/select";
+
 import { useStyletron } from "baseui";
 
 import {
@@ -25,6 +28,12 @@ interface IProps {
   onUpload(result: IUploadResult): void;
 }
 
+const referenceLocationOptions = [
+  { id: "document", label: "End of document" },
+  { id: "section", label: "End of section" },
+  { id: "block", label: "End of block" },
+];
+
 export const UploadStep: FC<IProps> = ({ onUpload }) => {
   const [css] = useStyletron();
   const [errorMessage, setErrorMessage] = useState("");
@@ -33,6 +42,13 @@ export const UploadStep: FC<IProps> = ({ onUpload }) => {
   const [templateFile, setTemplateFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const templateInputRef = useRef<HTMLInputElement>(null);
+
+  // Advanced options
+  const [toc, setToc] = useState(false);
+  const [tocDepth, setTocDepth] = useState("3");
+  const [numberSections, setNumberSections] = useState(false);
+  const [embedResources, setEmbedResources] = useState(false);
+  const [referenceLocation, setReferenceLocation] = useState<Value>([referenceLocationOptions[0]]);
 
   const handleUploadProgress = useCallback((progressEvent) => {
     setProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));
@@ -60,6 +76,21 @@ export const UploadStep: FC<IProps> = ({ onUpload }) => {
       if (templateFile) {
         data.append("template", templateFile);
       }
+      // Advanced options
+      if (toc) {
+        data.append("toc", "true");
+        data.append("tocDepth", tocDepth);
+      }
+      if (numberSections) {
+        data.append("numberSections", "true");
+      }
+      if (embedResources) {
+        data.append("embedResources", "true");
+      }
+      if (referenceLocation[0]) {
+        data.append("referenceLocation", (referenceLocation[0] as any).id);
+      }
+
       axios
         .post("/api/upload", data, {
           onUploadProgress: handleUploadProgress,
@@ -78,7 +109,7 @@ export const UploadStep: FC<IProps> = ({ onUpload }) => {
         });
       setErrorMessage("");
     },
-    [onUpload, destFormat, sourceFormat, templateFile]
+    [onUpload, destFormat, sourceFormat, templateFile, toc, tocDepth, numberSections, embedResources, referenceLocation]
   );
 
   const handleCancel = useCallback(() => {
@@ -103,6 +134,7 @@ export const UploadStep: FC<IProps> = ({ onUpload }) => {
   }, []);
 
   const showTemplateOption = destFormat.value === "docx" || destFormat.value === "odt";
+  const showAdvancedOptions = sourceFormat.value.includes("markdown") || sourceFormat.value === "gfm";
 
   return (
     <>
@@ -128,6 +160,66 @@ export const UploadStep: FC<IProps> = ({ onUpload }) => {
             )}
           </div>
         </FormControl>
+      )}
+      {showAdvancedOptions && (
+        <>
+          <div className={css({ marginBottom: "16px" })}>
+            <Checkbox
+              checked={toc}
+              onChange={(e) => setToc((e.target as HTMLInputElement).checked)}
+              labelPlacement={LABEL_PLACEMENT.right}
+            >
+              Table of Contents
+            </Checkbox>
+            {toc && (
+              <div className={css({ marginLeft: "28px", marginTop: "8px", maxWidth: "100px" })}>
+                <FormControl label="TOC Depth:">
+                  <Select
+                    options={[
+                      { id: "1", label: "1" },
+                      { id: "2", label: "2" },
+                      { id: "3", label: "3" },
+                      { id: "4", label: "4" },
+                      { id: "5", label: "5" },
+                      { id: "6", label: "6" },
+                    ]}
+                    value={[{ id: tocDepth, label: tocDepth }]}
+                    onChange={({ value }) => setTocDepth(value[0] ? (value[0] as any).id : "3")}
+                    clearable={false}
+                    size="compact"
+                  />
+                </FormControl>
+              </div>
+            )}
+          </div>
+          <div className={css({ marginBottom: "16px" })}>
+            <Checkbox
+              checked={numberSections}
+              onChange={(e) => setNumberSections((e.target as HTMLInputElement).checked)}
+              labelPlacement={LABEL_PLACEMENT.right}
+            >
+              Numbered Sections
+            </Checkbox>
+          </div>
+          <div className={css({ marginBottom: "16px" })}>
+            <Checkbox
+              checked={embedResources}
+              onChange={(e) => setEmbedResources((e.target as HTMLInputElement).checked)}
+              labelPlacement={LABEL_PLACEMENT.right}
+            >
+              Embed Resources
+            </Checkbox>
+          </div>
+          <FormControl label="Reference Links Location:">
+            <Select
+              options={referenceLocationOptions}
+              value={referenceLocation}
+              onChange={({ value }) => setReferenceLocation(value)}
+              clearable={false}
+              size="compact"
+            />
+          </FormControl>
+        </>
       )}
       <FileUploader
         multiple={false}

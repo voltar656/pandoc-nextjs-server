@@ -71,6 +71,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     // Get source format (optional)
     const sourceFormat = typeof fields.sourceFormat === "string" ? fields.sourceFormat : undefined;
 
+    // Get advanced options
+    const toc = fields.toc === "true";
+    const tocDepth = typeof fields.tocDepth === "string" ? parseInt(fields.tocDepth, 10) : undefined;
+    const numberSections = fields.numberSections === "true";
+    const embedResources = fields.embedResources === "true";
+    const referenceLocation = typeof fields.referenceLocation === "string" ? fields.referenceLocation : undefined;
+
     if (!mainFilePath) {
       res.json({
         success: false,
@@ -86,6 +93,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       format: format.value,
       sourceFormat,
       templatePath,
+      toc,
+      tocDepth,
+      numberSections,
+      embedResources,
+      referenceLocation,
       date: new Date().toISOString(),
     };
     writeMetaFile(status).then((err) => {

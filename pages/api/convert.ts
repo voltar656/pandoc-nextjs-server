@@ -52,12 +52,21 @@ function cleanupFiles(...paths: (string | undefined)[]): void {
   }
 }
 
+interface PandocOptions {
+  templatePath?: string;
+  toc?: boolean;
+  tocDepth?: number;
+  numberSections?: boolean;
+  embedResources?: boolean;
+  referenceLocation?: string;
+}
+
 async function runPandoc(
   src: string,
   dest: string,
   fromFormat: string,
   toFormat: string,
-  templatePath?: string
+  options: PandocOptions = {}
 ): Promise<{ success: boolean; error?: string }> {
   return new Promise((resolve) => {
     const args = [src, "-f", fromFormat];
@@ -75,8 +84,25 @@ async function runPandoc(
     }
 
     // Add reference doc for docx/odt
-    if (templatePath && (toFormat === "docx" || toFormat === "odt")) {
-      args.push("--reference-doc", templatePath);
+    if (options.templatePath && (toFormat === "docx" || toFormat === "odt")) {
+      args.push("--reference-doc", options.templatePath);
+    }
+
+    // Advanced options
+    if (options.toc) {
+      args.push("--toc");
+      if (options.tocDepth) {
+        args.push("--toc-depth", String(options.tocDepth));
+      }
+    }
+    if (options.numberSections) {
+      args.push("--number-sections");
+    }
+    if (options.embedResources) {
+      args.push("--embed-resources", "--standalone");
+    }
+    if (options.referenceLocation) {
+      args.push("--reference-location", options.referenceLocation);
     }
 
     args.push("-o", dest);
@@ -110,7 +136,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   // Parse query params
-  const { from, to } = req.query;
+  const { from, to, toc, tocDepth, numberSections, embedResources, referenceLocation } = req.query;
   if (typeof from !== "string" || typeof to !== "string") {
     res.status(400).json({
       success: false,
@@ -118,6 +144,15 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     });
     return;
   }
+
+  // Parse options from query params
+  const options: PandocOptions = {
+    toc: toc === "true",
+    tocDepth: typeof tocDepth === "string" ? parseInt(tocDepth, 10) : undefined,
+    numberSections: numberSections === "true",
+    embedResources: embedResources === "true",
+    referenceLocation: typeof referenceLocation === "string" ? referenceLocation : undefined,
+  };
 
   // Parse multipart form
   const form = new IncomingForm();
@@ -157,8 +192,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const ext = getExtension(to);
     const outputPath = resolve(appConfig.uploadDir, `${uuidv4()}.${ext}`);
 
+    // Add template to options
+    options.templatePath = templatePath;
+
     // Run pandoc
-    const result = await runPandoc(filePath, outputPath, from, to, templatePath);
+    const result = await runPandoc(filePath, outputPath, from, to, options);
 
     if (!result.success) {
       cleanupFiles(filePath, templatePath, outputPath);

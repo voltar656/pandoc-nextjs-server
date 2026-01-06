@@ -9,6 +9,13 @@ export interface IStatus {
   format: string;
   sourceFormat?: string;
   templatePath?: string;
+  // Advanced options
+  toc?: boolean;
+  tocDepth?: number;
+  numberSections?: boolean;
+  embedResources?: boolean;
+  referenceLocation?: string;
+  // Status
   date: string;
   scrapbox?: boolean;
   success?: boolean;
