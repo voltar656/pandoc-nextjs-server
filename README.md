@@ -89,8 +89,6 @@ Common formats: markdown, gfm, html, docx, epub, pdf, rst, latex, odt, rtf
 
 ## License
 
-MIT
+MIT - See [LICENSE](LICENSE)
 
----
-
-Original project (c) Jun Kato 2020-2021
+© 2026 Vikesh Malhi | Based on work by Jun Kato (2020-2021)
