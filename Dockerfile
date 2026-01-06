@@ -1,8 +1,9 @@
-FROM k1low/alpine-pandoc-ja
+FROM pandoc/extra
 RUN apk add --no-cache bash curl nodejs npm git
 RUN echo node `node -v` && \
   echo npm v`npm -v` && \
-  echo `git --version`
+  echo `git --version` && \
+  echo `pandoc --version | head -1`
 RUN mkdir -p /work/uploads
 COPY . /work
 RUN chmod 755 /work/uploads
