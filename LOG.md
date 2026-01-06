@@ -145,3 +145,43 @@ Completed Priority 3: Web UI enhancements and Priority 4: Documentation.
 
 ### Live
 https://oboe-alpha.exe.xyz:8000/
+
+## 2026-01-06T20:55:15+00:00
+
+### Summary
+Bug fixes and added advanced pandoc options to Web UI and API.
+
+### Bug Fixes
+- Fixed "File not found" on download page - Node.js was resolving `localhost` to IPv6 (`::1`) but server only listening on IPv4. Changed to `127.0.0.1`.
+- Fixed polling to stop once conversion completes (was updating every second indefinitely).
+- Removed "updated every second" message from UI.
+
+### New Features - Advanced Pandoc Options
+Added the following options to both Web UI and API:
+- **Table of Contents** with configurable depth (1-6)
+- **Numbered Sections**
+- **Embed Resources**
+- **Reference Links Location** (end of document/section/block)
+- **Figure Caption Position** (above/below)
+- **Table Caption Position** (above/below)
+
+Options appear in Web UI when source format is Markdown/GFM.
+
+### API Usage
+```bash
+curl -X POST -F "file=@doc.md" -F "template=@ref.docx" \
+  "http://localhost:8000/api/convert?from=markdown&to=docx&toc=true&tocDepth=3&numberSections=true&embedResources=true&referenceLocation=document&figureCaptionPosition=below&tableCaptionPosition=above" \
+  -o output.docx
+```
+
+### Files Changed
+- `components/UploadStep.tsx` - added advanced options UI
+- `lib/writeMetaFile.ts` - added option fields to IStatus
+- `lib/convert.ts` - pass options to pandoc
+- `pages/api/upload.ts` - parse options from form data
+- `pages/api/convert.ts` - parse options from query params
+- `pages/convert/[file].tsx` - fixed polling, removed message
+- `pages/download/[file].tsx` - fixed IPv6 issue
+
+### Live
+https://oboe-alpha.exe.xyz:8000/
