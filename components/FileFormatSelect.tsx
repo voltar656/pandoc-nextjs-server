@@ -35,7 +35,7 @@ export const FileFormatSelect: FC<Props> = ({ onSelect }) => {
     <Select
       options={formats.map((f) => ({ value: f.value, label: f.label }))}
       onChange={handleChange}
-      defaultValue={formats[0].value}
+      defaultValue={formats[0]?.value ?? "docx"}
     />
   );
 };

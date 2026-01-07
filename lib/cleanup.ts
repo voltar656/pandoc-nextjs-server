@@ -1,6 +1,7 @@
 import { readdir, stat, unlink } from "fs/promises";
 import { join } from "path";
 import appConfig from "./config";
+import logger from "./logger";
 
 const MAX_AGE_MS = 60 * 60 * 1000; // 1 hour
 const CLEANUP_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
@@ -23,15 +24,15 @@ async function cleanupOldFiles(): Promise<void> {
 
         if (age > MAX_AGE_MS) {
           await unlink(filePath);
-          console.log(`[cleanup] Deleted old file: ${file} (age: ${Math.round(age / 60000)}min)`);
+          logger.info({ file, ageMinutes: Math.round(age / 60000) }, "Deleted old file");
         }
-      } catch (err) {
+      } catch (err: unknown) {
         // File may have been deleted by another process
-        console.warn(`[cleanup] Could not process ${file}:`, err);
+        logger.warn({ file, err }, "Could not process file during cleanup");
       }
     }
-  } catch (err) {
-    console.error("[cleanup] Failed to read upload directory:", err);
+  } catch (err: unknown) {
+    logger.error({ err }, "Failed to read upload directory during cleanup");
   }
 }
 
@@ -41,17 +42,21 @@ export function startCleanupScheduler(): void {
   if (cleanupInterval) return; // Already running
 
   // Run immediately on startup
-  console.log("[cleanup] Running startup cleanup...");
-  cleanupOldFiles();
+  logger.info("Running startup cleanup");
+  void cleanupOldFiles();
 
   // Schedule periodic cleanup
   cleanupInterval = setInterval(() => {
-    console.log("[cleanup] Running scheduled cleanup...");
-    cleanupOldFiles();
+    logger.info("Running scheduled cleanup");
+    void cleanupOldFiles();
   }, CLEANUP_INTERVAL_MS);
 
-  console.log(
-    `[cleanup] Scheduler started (interval: ${CLEANUP_INTERVAL_MS / 60000}min, max age: ${MAX_AGE_MS / 60000}min)`
+  logger.info(
+    {
+      intervalMinutes: CLEANUP_INTERVAL_MS / 60000,
+      maxAgeMinutes: MAX_AGE_MS / 60000,
+    },
+    "Cleanup scheduler started"
   );
 }
 
@@ -59,6 +64,6 @@ export function stopCleanupScheduler(): void {
   if (cleanupInterval) {
     clearInterval(cleanupInterval);
     cleanupInterval = null;
-    console.log("[cleanup] Scheduler stopped");
+    logger.info("Cleanup scheduler stopped");
   }
 }

@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import { AppError, sendError } from "./errors";
 
 interface RateLimitEntry {
   count: number;
@@ -26,16 +27,16 @@ function getClientIP(req: NextApiRequest): string {
   // Check common proxy headers
   const forwarded = req.headers["x-forwarded-for"];
   if (typeof forwarded === "string") {
-    return forwarded.split(",")[0].trim();
+    return forwarded.split(",")[0]?.trim() ?? "unknown";
   }
-  if (Array.isArray(forwarded)) {
+  if (Array.isArray(forwarded) && forwarded[0]) {
     return forwarded[0];
   }
   const realIP = req.headers["x-real-ip"];
   if (typeof realIP === "string") {
     return realIP;
   }
-  return req.socket?.remoteAddress || "unknown";
+  return req.socket?.remoteAddress ?? "unknown";
 }
 
 export function rateLimit(req: NextApiRequest, res: NextApiResponse): boolean {
@@ -58,10 +59,7 @@ export function rateLimit(req: NextApiRequest, res: NextApiResponse): boolean {
   res.setHeader("X-RateLimit-Reset", Math.ceil(entry.resetTime / 1000));
 
   if (entry.count > MAX_REQUESTS) {
-    res.status(429).json({
-      success: false,
-      error: "Too many requests. Please try again later.",
-    });
+    sendError(res, AppError.rateLimited());
     return false;
   }
 

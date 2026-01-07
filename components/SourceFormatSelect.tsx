@@ -33,7 +33,7 @@ export const SourceFormatSelect: FC<Props> = ({ onSelect }) => {
     <Select
       options={sourceFormats.map((f) => ({ value: f.value, label: f.label }))}
       onChange={handleChange}
-      defaultValue={sourceFormats[0].value}
+      defaultValue={sourceFormats[0]?.value ?? "markdown"}
     />
   );
 };

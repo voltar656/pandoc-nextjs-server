@@ -38,8 +38,12 @@ const tocDepthOptions = [
 
 export const UploadStep: FC<IProps> = ({ onConvertComplete }) => {
   const [errorMessage, setErrorMessage] = useState("");
-  const [sourceFormat, setSourceFormat] = useState<ISourceFormat>(sourceFormats[0]);
-  const [destFormat, setDestFormat] = useState<IFileFormat>(formats[0]);
+  const [sourceFormat, setSourceFormat] = useState<ISourceFormat>(
+    sourceFormats[0] ?? { value: "markdown", label: "Markdown" }
+  );
+  const [destFormat, setDestFormat] = useState<IFileFormat>(
+    formats[0] ?? { value: "docx", label: "Word (.docx)" }
+  );
   const [templateFile, setTemplateFile] = useState<File | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
@@ -60,8 +64,9 @@ export const UploadStep: FC<IProps> = ({ onConvertComplete }) => {
       setErrorMessage(rejectedFiles.length > 1 ? "Too many files" : "Something wrong happened");
       return;
     }
-    if (acceptedFiles.length > 0) {
-      setSelectedFile(acceptedFiles[0]);
+    const firstFile = acceptedFiles[0];
+    if (firstFile) {
+      setSelectedFile(firstFile);
       setErrorMessage("");
     }
   }, []);

@@ -64,19 +64,19 @@
 - [x] **Remove hardcoded localhost in SSR** - Changed `pages/download/[file].tsx` to use direct file system read via `readMetaFile()` instead of HTTP
 - [x] **Sanitize all file inputs consistently** - Added `sanitize-filename` to `/api/convert.ts` and `/api/upload.ts`
 
-### Error Handling (High)
+### Error Handling (High) ✅
 
-- [ ] **Standardize error responses** - Inconsistent patterns: some use `res.json({ success: false })`, others `res.status(4xx).json()`
-- [ ] **Add structured logging** - No logging anywhere; add a logger (pino/winston) with request IDs for traceability
-- [ ] **Handle cleanup errors** - `unlink()` callbacks silently ignore errors; should at least log
-- [ ] **Type error catches** - Many `catch (e)` blocks without proper typing (enabled by `strict: false`)
+- [x] **Standardize error responses** - Created `lib/errors.ts` with `AppError` class, `ErrorCode` enum, and `sendError()` helper; all endpoints now use consistent `{ success: false, error: string, code?: string }` format
+- [x] **Add structured logging** - Added pino logger (`lib/logger.ts`) with request ID tracking, log levels, and pretty printing in dev
+- [x] **Handle cleanup errors** - `cleanupFiles()` now logs warnings for failed deletions instead of silently ignoring
+- [x] **Type error catches** - All catch blocks now properly typed with `catch (err: unknown)` and `getErrorMessage()` helper
 
-### Type Safety (High)
+### Type Safety (High) ✅
 
-- [ ] **Enable TypeScript strict mode** - `tsconfig.json` has `strict: false`, disabling critical safety checks
-- [ ] **Eliminate `any` types** - `readMetaFile` returns `Promise<any>`, loses type safety downstream
-- [ ] **Add missing @types** - Missing `@types/formidable` and `@types/sanitize-filename` in devDependencies
-- [ ] **Tighten IStatus interface** - Too many optional fields make state reasoning difficult; consider discriminated unions
+- [x] **Enable TypeScript strict mode** - Enabled `strict: true` and `noUncheckedIndexedAccess: true` in tsconfig.json
+- [x] **Eliminate `any` types** - Removed readMetaFile (no longer used); all remaining code is strictly typed
+- [x] **Add missing @types** - Added `@types/formidable` (sanitize-filename has built-in types)
+- [x] **Tighten interfaces** - Simplified codebase by removing async flow; remaining interfaces are minimal and well-typed
 
 ### API Design (Medium)
 

@@ -1,13 +1,20 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import formidable from "formidable";
+import formidable, { File as FormidableFile } from "formidable";
 import { v4 as uuidv4 } from "uuid";
 import { resolve, extname, basename } from "path";
 import { unlink, createReadStream } from "fs";
 import { spawn } from "child_process";
 import sanitize from "sanitize-filename";
 
-import appConfig, { isValidSourceFormat, isValidDestFormat, getDestFormat } from "../../lib/config";
+import appConfig, {
+  isValidSourceFormat,
+  isValidDestFormat,
+  getDestFormat,
+  IFormat,
+} from "../../lib/config";
 import { rateLimit } from "../../lib/rateLimit";
+import { createRequestLogger, Logger } from "../../lib/logger";
+import { AppError, sendError, getErrorMessage } from "../../lib/errors";
 
 export const config = {
   api: {
@@ -15,17 +22,23 @@ export const config = {
   },
 };
 
-function getExtension(format: string, destFormat?: { ext?: string }): string {
-  return destFormat?.ext || format;
+function getExtension(format: string, destFormat?: IFormat): string {
+  return destFormat?.ext ?? format;
 }
 
-function getMimeType(destFormat?: { mime?: string }): string {
-  return destFormat?.mime || "application/octet-stream";
+function getMimeType(destFormat?: IFormat): string {
+  return destFormat?.mime ?? "application/octet-stream";
 }
 
-function cleanupFiles(...paths: (string | undefined)[]): void {
+function cleanupFiles(logger: Logger, ...paths: (string | undefined)[]): void {
   for (const p of paths) {
-    if (p) unlink(p, () => {});
+    if (p) {
+      unlink(p, (err) => {
+        if (err) {
+          logger.warn({ path: p, err }, "Failed to cleanup file");
+        }
+      });
+    }
   }
 }
 
@@ -40,13 +53,19 @@ interface PandocOptions {
   tableCaptionPosition?: string;
 }
 
+interface PandocResult {
+  success: boolean;
+  error?: string;
+}
+
 async function runPandoc(
+  logger: Logger,
   src: string,
   dest: string,
   fromFormat: string,
   toFormat: string,
   options: PandocOptions = {}
-): Promise<{ success: boolean; error?: string }> {
+): Promise<PandocResult> {
   return new Promise((resolve) => {
     const args = [src, "-f", fromFormat];
 
@@ -74,6 +93,8 @@ async function runPandoc(
 
     args.push("-o", dest);
 
+    logger.info({ args }, "Running pandoc");
+
     let stderr = "";
     const proc = spawn("pandoc", args);
 
@@ -82,67 +103,87 @@ async function runPandoc(
     });
 
     proc.on("error", (err) => {
+      logger.error({ err }, "Pandoc process error");
       resolve({ success: false, error: err.message });
     });
 
     proc.on("exit", (code) => {
-      resolve(
-        code === 0
-          ? { success: true }
-          : { success: false, error: stderr || `pandoc exited with code ${code}` }
-      );
+      if (code === 0) {
+        logger.info("Pandoc conversion successful");
+        resolve({ success: true });
+      } else {
+        logger.error({ code, stderr }, "Pandoc conversion failed");
+        resolve({
+          success: false,
+          error: stderr || `pandoc exited with code ${code}`,
+        });
+      }
     });
   });
 }
 
-const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  // Rate limiting
-  if (!rateLimit(req, res)) return;
+function parseQueryString(value: string | string[] | undefined): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
 
-  if (req.method !== "POST") {
-    res.status(405).json({ success: false, error: "Method not allowed" });
+function parseQueryBoolean(value: string | string[] | undefined): boolean {
+  return value === "true";
+}
+
+function parseQueryNumber(value: string | string[] | undefined): number | undefined {
+  if (typeof value === "string") {
+    const num = parseInt(value, 10);
+    return isNaN(num) ? undefined : num;
+  }
+  return undefined;
+}
+
+const handler = async (req: NextApiRequest, res: NextApiResponse): Promise<void> => {
+  const logger = createRequestLogger(req);
+  logger.info("Convert request received");
+
+  // Rate limiting
+  if (!rateLimit(req, res)) {
+    logger.warn("Rate limit exceeded");
     return;
   }
 
-  const {
-    from,
-    to,
-    toc,
-    tocDepth,
-    numberSections,
-    embedResources,
-    referenceLocation,
-    figureCaptionPosition,
-    tableCaptionPosition,
-  } = req.query;
-  if (typeof from !== "string" || typeof to !== "string") {
-    res.status(400).json({ success: false, error: "Query params 'from' and 'to' are required" });
+  if (req.method !== "POST") {
+    sendError(res, AppError.methodNotAllowed(req.method ?? "unknown"), logger);
+    return;
+  }
+
+  const from = parseQueryString(req.query.from);
+  const to = parseQueryString(req.query.to);
+
+  if (!from || !to) {
+    sendError(res, AppError.badRequest("Query params 'from' and 'to' are required"), logger);
     return;
   }
 
   // Validate formats against allowed list
   if (!isValidSourceFormat(from)) {
-    res.status(400).json({ success: false, error: `Invalid source format: ${from}` });
+    sendError(res, AppError.invalidFormat(from, "source"), logger);
     return;
   }
   if (!isValidDestFormat(to)) {
-    res.status(400).json({ success: false, error: `Invalid destination format: ${to}` });
+    sendError(res, AppError.invalidFormat(to, "destination"), logger);
     return;
   }
 
   const destFormat = getDestFormat(to);
 
   const options: PandocOptions = {
-    toc: toc === "true",
-    tocDepth: typeof tocDepth === "string" ? parseInt(tocDepth, 10) : undefined,
-    numberSections: numberSections === "true",
-    embedResources: embedResources === "true",
-    referenceLocation: typeof referenceLocation === "string" ? referenceLocation : undefined,
-    figureCaptionPosition:
-      typeof figureCaptionPosition === "string" ? figureCaptionPosition : undefined,
-    tableCaptionPosition:
-      typeof tableCaptionPosition === "string" ? tableCaptionPosition : undefined,
+    toc: parseQueryBoolean(req.query.toc),
+    tocDepth: parseQueryNumber(req.query.tocDepth),
+    numberSections: parseQueryBoolean(req.query.numberSections),
+    embedResources: parseQueryBoolean(req.query.embedResources),
+    referenceLocation: parseQueryString(req.query.referenceLocation),
+    figureCaptionPosition: parseQueryString(req.query.figureCaptionPosition),
+    tableCaptionPosition: parseQueryString(req.query.tableCaptionPosition),
   };
+
+  logger.info({ from, to, options }, "Conversion parameters");
 
   const uploadDir = resolve(process.cwd(), appConfig.uploadDir);
   const form = formidable({
@@ -152,39 +193,50 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     maxTotalFileSize: appConfig.maxTotalFileSize,
     filename: (_name, _ext, part) => {
       // Sanitize and generate safe filename
-      const originalName = part.originalFilename || "";
+      const originalName = part.originalFilename ?? "";
       const safeName = sanitize(basename(originalName));
       const ext = extname(safeName);
       return `${uuidv4()}${ext}`;
     },
   });
 
+  let filePath: string | undefined;
+  let templatePath: string | undefined;
+  let outputPath: string | undefined;
+
   try {
     const [, files] = await form.parse(req);
 
     const fileArr = files.file;
-    const mainFile = Array.isArray(fileArr) ? fileArr[0] : fileArr;
+    const mainFile: FormidableFile | undefined = Array.isArray(fileArr) ? fileArr[0] : fileArr;
     const templateArr = files.template;
-    const templateFile = Array.isArray(templateArr) ? templateArr[0] : templateArr;
+    const templateFile: FormidableFile | undefined = Array.isArray(templateArr)
+      ? templateArr[0]
+      : templateArr;
 
     if (!mainFile) {
-      cleanupFiles(templateFile?.filepath);
-      res.status(400).json({ success: false, error: "'file' field is required" });
+      cleanupFiles(logger, templateFile?.filepath);
+      sendError(res, AppError.missingField("file"), logger);
       return;
     }
 
-    const filePath = mainFile.filepath;
-    const templatePath = templateFile?.filepath;
+    filePath = mainFile.filepath;
+    templatePath = templateFile?.filepath;
     options.templatePath = templatePath;
 
-    const ext = getExtension(to, destFormat);
-    const outputPath = resolve(uploadDir, `${uuidv4()}.${ext}`);
+    logger.info(
+      { filePath, templatePath, originalName: mainFile.originalFilename },
+      "Files received"
+    );
 
-    const result = await runPandoc(filePath, outputPath, from, to, options);
+    const ext = getExtension(to, destFormat);
+    outputPath = resolve(uploadDir, `${uuidv4()}.${ext}`);
+
+    const result = await runPandoc(logger, filePath, outputPath, from, to, options);
 
     if (!result.success) {
-      cleanupFiles(filePath, templatePath, outputPath);
-      res.status(500).json({ success: false, error: result.error });
+      cleanupFiles(logger, filePath, templatePath, outputPath);
+      sendError(res, AppError.conversionFailed(result.error), logger);
       return;
     }
 
@@ -197,15 +249,33 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const stream = createReadStream(outputPath);
     stream.pipe(res);
 
-    stream.on("close", () => cleanupFiles(filePath, templatePath, outputPath));
-    stream.on("error", () => {
-      cleanupFiles(filePath, templatePath, outputPath);
+    stream.on("close", () => {
+      logger.info("Response sent, cleaning up");
+      cleanupFiles(logger, filePath, templatePath, outputPath);
+    });
+
+    stream.on("error", (err) => {
+      logger.error({ err }, "Stream error");
+      cleanupFiles(logger, filePath, templatePath, outputPath);
       if (!res.headersSent) {
-        res.status(500).json({ success: false, error: "Failed to read output file" });
+        sendError(res, AppError.fileReadError(), logger);
       }
     });
-  } catch (err) {
-    res.status(400).json({ success: false, error: "Failed to parse form data" });
+  } catch (err: unknown) {
+    cleanupFiles(logger, filePath, templatePath, outputPath);
+
+    // Check for formidable file size errors
+    if (err instanceof Error && err.message.includes("maxFileSize")) {
+      sendError(res, AppError.fileTooLarge(appConfig.maxFileSize), logger);
+      return;
+    }
+
+    logger.error({ err }, "Form parsing error");
+    sendError(
+      res,
+      AppError.badRequest(`Failed to parse form data: ${getErrorMessage(err)}`),
+      logger
+    );
   }
 };
 

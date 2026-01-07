@@ -616,3 +616,98 @@ cbb2926 Security hardening: file cleanup, rate limiting, size limits, input vali
 120dbef Fix UX flow: show completion page with download link
 3b2c7da Add DevOps tooling: graceful shutdown, ESLint, Prettier, pre-commit hooks
 ```
+
+## 2026-01-07: Error Handling and Type Safety
+
+### Summary
+
+Implemented comprehensive error handling and enabled TypeScript strict mode.
+
+### Error Handling Improvements
+
+1. **Standardized Error Responses**
+   - Created `lib/errors.ts` with:
+     - `AppError` class with factory methods (`badRequest`, `invalidFormat`, `fileTooLarge`, etc.)
+     - `ErrorCode` enum for machine-readable error codes
+     - `sendError()` helper for consistent response format
+   - All API responses now follow `{ success: false, error: string, code?: string }` pattern
+
+2. **Structured Logging**
+   - Added pino logger (`lib/logger.ts`)
+   - Request-scoped logging with unique request IDs
+   - Client IP tracking via `x-forwarded-for` / `x-real-ip`
+   - Pretty printing in development mode
+   - Configurable log level via `LOG_LEVEL` env var
+
+3. **Proper Error Handling**
+   - `cleanupFiles()` logs warnings for failed deletions
+   - All catch blocks use `catch (err: unknown)` pattern
+   - `getErrorMessage()` helper safely extracts error messages
+
+### Type Safety Improvements
+
+1. **Strict Mode Enabled**
+   - `strict: true` in tsconfig.json
+   - `noUncheckedIndexedAccess: true` for array safety
+
+2. **Fixed All Type Errors**
+   - Array access now uses optional chaining (`arr[0]?.value`)
+   - IP extraction handles undefined cases
+   - Added fallback defaults for initializers
+
+3. **Added Missing Types**
+   - `@types/formidable` for form parsing
+   - pino types via `pino` package
+
+### Files Added
+
+- `lib/errors.ts` - Error types and helpers
+- `lib/logger.ts` - Pino logger configuration
+
+### Files Modified
+
+- `tsconfig.json` - strict mode enabled
+- `pages/api/convert.ts` - uses new error handling and logging
+- `pages/api/health.ts` - uses new logging
+- `lib/cleanup.ts` - uses new logging
+- `lib/rateLimit.ts` - uses AppError for rate limit responses
+- `instrumentation.ts` - uses new logging
+- Various components - fixed type errors from strict mode
+
+### API Error Response Examples
+
+```json
+// 400 Bad Request - Missing params
+{ "success": false, "error": "Query params 'from' and 'to' are required", "code": "BAD_REQUEST" }
+
+// 400 Bad Request - Invalid format
+{ "success": false, "error": "Invalid source format: invalid", "code": "INVALID_FORMAT" }
+
+// 413 Payload Too Large
+{ "success": false, "error": "File too large. Maximum size is 50MB", "code": "FILE_TOO_LARGE" }
+
+// 429 Too Many Requests
+{ "success": false, "error": "Too many requests. Please try again later.", "code": "RATE_LIMITED" }
+
+// 500 Internal Server Error - Conversion failed
+{ "success": false, "error": "Conversion failed: pandoc error message", "code": "CONVERSION_FAILED" }
+```
+
+### Log Output Example
+
+```json
+{
+  "level": 30,
+  "time": 1767820723320,
+  "pid": 22789,
+  "hostname": "oboe-alpha",
+  "requestId": "19bab917-4a4b-4652-ace3-4b1677277f10",
+  "method": "POST",
+  "path": "/api/convert?from=markdown&to=html",
+  "clientIp": "::1",
+  "from": "markdown",
+  "to": "html",
+  "options": { "toc": false },
+  "msg": "Conversion parameters"
+}
+```
