@@ -230,3 +230,66 @@ docker pull ghcr.io/voltar656/pandoc-nextjs-server:latest
 - Push to GitHub to trigger workflow
 - Verify image appears in GitHub Packages
 - Make package public if needed for unauthenticated pulls
+
+## 2026-01-07T01:15:00+00:00
+
+### Summary
+Major upgrade: Next.js 15 + React 19 + Tailwind CSS (replaced baseui/styletron).
+
+### Completed
+- Upgraded Next.js from 10 to 15
+- Upgraded React from 17 to 19
+- Replaced baseui/styletron UI library with Tailwind CSS
+- Upgraded formidable from 1.x to 3.x (now uses async/await)
+- Upgraded axios to 1.x
+- Upgraded TypeScript to 5.x
+- Simplified Dockerfile (no more Node.js workarounds needed)
+
+### Removed Dependencies
+- baseui
+- styletron-engine-atomic
+- styletron-react
+- @types/formidable (now built-in)
+- @types/styletron-*
+- cross-env (not needed)
+
+### Removed Workarounds
+- `postcss` override in package.json
+- `NODE_OPTIONS=--openssl-legacy-provider` in Dockerfile
+- `@types/react` pinning
+
+### New Files
+- `components/ui.tsx` - Button, Select, Checkbox, FormControl, Spinner, Typography
+- `components/FileUploader.tsx` - Custom drag-drop file uploader
+- `styles/globals.css` - Tailwind imports
+- `tailwind.config.js` - Tailwind configuration
+- `postcss.config.js` - PostCSS configuration
+
+### Package.json Changes
+```json
+{
+  "dependencies": {
+    "next": "^15.0.0",      // was ^10.0.6
+    "react": "^19.0.0",     // was ^17.0.1
+    "axios": "^1.7.0",      // was ^0.21.1
+    "formidable": "^3.5.0"  // was ^1.2.2
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0", // was ^4.1.4
+    "tailwindcss": "^3.4.0",
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.0"
+  }
+}
+```
+
+### Build Results
+- 0 vulnerabilities (was 40+)
+- Build time: ~18 seconds
+- First Load JS: ~100KB shared + 3-4KB per page
+
+### Branch
+`next15-tailwind` - ready for review/merge
+
+### Screenshot
+New Tailwind UI with clean stepper, form controls, and drag-drop uploader.
