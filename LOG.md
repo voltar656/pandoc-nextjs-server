@@ -560,3 +560,59 @@ Added graceful shutdown, ESLint + Prettier, and pre-commit hooks.
 - `instrumentation.ts` - graceful shutdown
 - `package.json` - scripts, devDependencies, lint-staged config
 - Various source files - formatted with Prettier
+
+## 2026-01-07: Session Summary
+
+### Work Completed Today
+
+1. **Code Review** - Senior engineer assessment identifying issues across security, architecture, testing, and documentation
+
+2. **Security Hardening (Critical)** ✅
+   - Automatic file cleanup (startup + every 15 min)
+   - Rate limiting (30 req/min per IP)
+   - File size limits (50MB/100MB)
+   - Format validation
+   - Input sanitization
+   - Docker HEALTHCHECK + tmpfs instructions
+
+3. **Architecture Simplification** ✅
+   - Unified two conversion flows into single sync API
+   - Removed 13 files, -997 lines of code
+   - Web UI now calls `/api/convert` directly
+   - Proper UX: Convert → Complete page → Download link
+
+4. **DevOps Tooling** ✅
+   - Graceful shutdown (SIGTERM/SIGINT handlers)
+   - ESLint + Prettier configuration
+   - Pre-commit hooks (husky + lint-staged)
+
+### Remaining Tasks (from TASKS.md)
+
+**API Design (Medium)**
+
+- Refactor API to use JSON options field instead of query params
+
+**Architecture (Medium)**
+
+- Make PDF settings env-configurable
+- Add concurrency limits for pandoc processes
+- API versioning (/api/v1/)
+
+**Testing (High)**
+
+- Unit tests, API integration tests, E2E tests
+
+**Documentation (Low)**
+
+- JSDoc comments
+- OpenAPI/Swagger spec
+- Environment variable documentation
+
+### Git Commits
+
+```
+cbb2926 Security hardening: file cleanup, rate limiting, size limits, input validation
+2d3aac5 Unify conversion flows: single sync API for both Web UI and API
+120dbef Fix UX flow: show completion page with download link
+3b2c7da Add DevOps tooling: graceful shutdown, ESLint, Prettier, pre-commit hooks
+```
