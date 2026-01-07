@@ -5,6 +5,7 @@ import { Button, FormControl, Checkbox, Select } from "./ui";
 import { FileUploader } from "./FileUploader";
 import { IFileFormat, FileFormatSelect, formats } from "./FileFormatSelect";
 import { ISourceFormat, SourceFormatSelect, sourceFormats } from "./SourceFormatSelect";
+import { AxiosProgressEvent } from "axios";
 
 interface IUploadResult {
   success: boolean;
@@ -40,7 +41,9 @@ export const UploadStep: FC<IProps> = ({ onUpload }) => {
   const [sourceFormat, setSourceFormat] = useState<ISourceFormat>(sourceFormats[0]);
   const [destFormat, setDestFormat] = useState<IFileFormat>(formats[0]);
   const [templateFile, setTemplateFile] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
+  const [uploading, setUploading] = useState(false);
   const templateInputRef = useRef<HTMLInputElement>(null);
 
   // Advanced options
@@ -58,47 +61,70 @@ export const UploadStep: FC<IProps> = ({ onUpload }) => {
         setErrorMessage(rejectedFiles.length > 1 ? "Too many files" : "Something wrong happened");
         return;
       }
-
-      const data = new FormData();
-      acceptedFiles.forEach((file, i) => {
-        data.append(`files[${i}]`, file);
-      });
-      data.append("format", destFormat.value);
-      data.append("sourceFormat", sourceFormat.value);
-      if (templateFile) {
-        data.append("template", templateFile);
+      if (acceptedFiles.length > 0) {
+        setSelectedFile(acceptedFiles[0]);
+        setErrorMessage("");
       }
-      if (toc) {
-        data.append("toc", "true");
-        data.append("tocDepth", tocDepth);
-      }
-      if (numberSections) data.append("numberSections", "true");
-      if (embedResources) data.append("embedResources", "true");
-      data.append("referenceLocation", referenceLocation);
-      data.append("figureCaptionPosition", figureCaptionPosition);
-      data.append("tableCaptionPosition", tableCaptionPosition);
-
-      axios
-        .post("/api/upload", data, {
-          onUploadProgress: (e) => setProgress(Math.round((e.loaded * 100) / (e.total || 1))),
-          responseType: "json",
-        })
-        .then((res) => {
-          if (!res?.data?.success) {
-            setErrorMessage(res?.data?.error || "Something wrong happened");
-            return;
-          }
-          onUpload(res.data);
-        })
-        .catch(() => setErrorMessage("Upload failed"));
-
-      setErrorMessage("");
     },
-    [onUpload, destFormat, sourceFormat, templateFile, toc, tocDepth, numberSections, embedResources, referenceLocation, figureCaptionPosition, tableCaptionPosition]
+    []
   );
+
+  const handleConvert = useCallback(() => {
+    if (!selectedFile) {
+      setErrorMessage("Please select a file first");
+      return;
+    }
+
+    setUploading(true);
+    setErrorMessage("");
+
+    const data = new FormData();
+    data.append("files[0]", selectedFile);
+    data.append("format", destFormat.value);
+    data.append("sourceFormat", sourceFormat.value);
+    if (templateFile) {
+      data.append("template", templateFile);
+    }
+    if (toc) {
+      data.append("toc", "true");
+      data.append("tocDepth", tocDepth);
+    }
+    if (numberSections) data.append("numberSections", "true");
+    if (embedResources) data.append("embedResources", "true");
+    data.append("referenceLocation", referenceLocation);
+    data.append("figureCaptionPosition", figureCaptionPosition);
+    data.append("tableCaptionPosition", tableCaptionPosition);
+
+    axios
+      .post("/api/upload", data, {
+        onUploadProgress: (e: AxiosProgressEvent) => setProgress(Math.round((e.loaded * 100) / (e.total || 1))),
+        responseType: "json",
+      })
+      .then((res) => {
+        setUploading(false);
+        setProgress(null);
+        if (!res?.data?.success) {
+          setErrorMessage(res?.data?.error || "Something wrong happened");
+          return;
+        }
+        onUpload(res.data);
+      })
+      .catch(() => {
+        setUploading(false);
+        setProgress(null);
+        setErrorMessage("Upload failed");
+      });
+  }, [selectedFile, onUpload, destFormat, sourceFormat, templateFile, toc, tocDepth, numberSections, embedResources, referenceLocation, figureCaptionPosition, tableCaptionPosition]);
 
   const handleRetry = useCallback(() => {
     setProgress(null);
+    setErrorMessage("");
+    setSelectedFile(null);
+    setUploading(false);
+  }, []);
+
+  const handleClearFile = useCallback(() => {
+    setSelectedFile(null);
     setErrorMessage("");
   }, []);
 
@@ -200,14 +226,45 @@ export const UploadStep: FC<IProps> = ({ onUpload }) => {
         </div>
       )}
 
-      <FileUploader
-        multiple={false}
-        onDrop={handleDrop}
-        onRetry={handleRetry}
-        progressAmount={progress}
-        progressMessage={progress ? `Uploading... ${progress}% of 100%` : ""}
-        errorMessage={errorMessage}
-      />
+      {/* File Selection */}
+      {selectedFile ? (
+        <div className="border-2 border-green-300 rounded-lg p-4 bg-green-50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p className="font-medium text-gray-900">{selectedFile.name}</p>
+                <p className="text-sm text-gray-500">{(selectedFile.size / 1024).toFixed(1)} KB</p>
+              </div>
+            </div>
+            <Button variant="tertiary" size="compact" onClick={handleClearFile}>
+              Change
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <FileUploader
+          multiple={false}
+          onDrop={handleDrop}
+          onRetry={handleRetry}
+          progressAmount={progress}
+          progressMessage={progress ? `Uploading... ${progress}% of 100%` : ""}
+          errorMessage={errorMessage}
+        />
+      )}
+
+      {/* Convert Button */}
+      <div className="pt-4">
+        <Button
+          onClick={handleConvert}
+          disabled={!selectedFile || uploading}
+          className="w-full"
+        >
+          {uploading ? `Converting... ${progress || 0}%` : "Convert"}
+        </Button>
+      </div>
     </div>
   );
 };
