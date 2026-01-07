@@ -24,9 +24,12 @@
     "styletron-react": "^5.2.7",
     "uuid": "^7.0.3"
   },
+  "overrides": {
+    "postcss": "^8.4.31"
+  },
   "devDependencies": {
     "@types/node": "^14.14.25",
-    "@types/react": "^17.0.0",
+    "@types/react": "17.0.39",
     "@types/react-dom": "^17.0.0",
     "@types/styletron-engine-atomic": "^1.1.0",
     "@types/styletron-react": "^5.0.2",
