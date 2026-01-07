@@ -293,3 +293,59 @@ Major upgrade: Next.js 15 + React 19 + Tailwind CSS (replaced baseui/styletron).
 
 ### Screenshot
 New Tailwind UI with clean stepper, form controls, and drag-drop uploader.
+
+## 2026-01-07T01:45:00+00:00
+
+### Summary
+Merged Next.js 15 upgrade to main, fixed issues, tested in Docker, pushed to GitHub.
+
+### Completed
+- Added explicit "Convert" button to Upload page (was auto-submitting on file drop)
+- Fixed `.dockerignore` excluding `*.js` which blocked `postcss.config.js` and `tailwind.config.js`
+- Merged `next15-tailwind` branch to `main`
+- Built and tested Docker image locally
+- Verified API conversion works (markdown → HTML)
+- Verified Tailwind CSS renders correctly in container
+- Updated all documentation (TASKS.md, PLANNING.md, README.md)
+- Pushed to GitHub - workflow triggered for GHCR
+
+### Files Changed
+- `components/UploadStep.tsx` - two-step flow: select file, then click Convert
+- `.dockerignore` - removed `**/*.js` pattern, added specific exclusions
+- `TASKS.md` - reorganized, marked all priorities complete
+- `PLANNING.md` - added v2.0 architecture, full API docs, comparison table
+- `README.md` - comprehensive rewrite with GHCR instructions, API tables, examples
+
+### Docker Test Results
+```bash
+# Health check
+curl http://localhost:8003/api/health
+# {"status":"ok","pandoc":"3.8.3"}
+
+# Conversion test
+curl -X POST -F "file=@test.md" "http://localhost:8003/api/convert?from=markdown&to=html"
+# <h1 id="hello-world">Hello World</h1>...
+```
+
+### Git Status
+```
+main branch: 660e3b9
+Pushed to: github.com/voltar656/pandoc-nextjs-server
+GHCR image: ghcr.io/voltar656/pandoc-nextjs-server:latest
+```
+
+### What's Ready
+- ✅ Web UI with Tailwind CSS
+- ✅ REST API with all pandoc options
+- ✅ Docker image on GHCR
+- ✅ GitHub Actions CI/CD
+- ✅ Full documentation
+
+### Tomorrow: Testing Checklist
+1. Pull from GHCR and verify
+2. Web UI: Upload → Convert → Download flow
+3. API: Various format conversions
+4. Template support (docx with reference doc)
+5. Advanced options (TOC, numbering, embed)
+6. Error handling edge cases
+7. Deploy to small prod for feedback
