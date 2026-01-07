@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { IncomingForm } from "formidable";
+import formidable from "formidable";
 import { v4 as uuidv4 } from "uuid";
 import { resolve, extname } from "path";
 import { unlink, createReadStream } from "fs";
@@ -13,7 +13,6 @@ export const config = {
   },
 };
 
-// MIME types for common output formats
 const mimeTypes: Record<string, string> = {
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   odt: "application/vnd.oasis.opendocument.text",
@@ -28,7 +27,6 @@ const mimeTypes: Record<string, string> = {
   txt: "text/plain",
 };
 
-// File extensions for formats
 const extensions: Record<string, string> = {
   markdown: "md",
   gfm: "md",
@@ -46,9 +44,7 @@ function getMimeType(format: string): string {
 
 function cleanupFiles(...paths: (string | undefined)[]): void {
   for (const p of paths) {
-    if (p) {
-      unlink(p, () => {});
-    }
+    if (p) unlink(p, () => {});
   }
 }
 
@@ -73,7 +69,6 @@ async function runPandoc(
   return new Promise((resolve) => {
     const args = [src, "-f", fromFormat];
 
-    // Handle PDF output specially
     if (toFormat === "pdf") {
       args.push(
         "-V", "documentclass=ltjarticle",
@@ -85,39 +80,25 @@ async function runPandoc(
       args.push("-t", toFormat);
     }
 
-    // Add reference doc for docx/odt
     if (options.templatePath && (toFormat === "docx" || toFormat === "odt")) {
       args.push("--reference-doc", options.templatePath);
     }
 
-    // Advanced options
     if (options.toc) {
       args.push("--toc");
-      if (options.tocDepth) {
-        args.push("--toc-depth", String(options.tocDepth));
-      }
+      if (options.tocDepth) args.push("--toc-depth", String(options.tocDepth));
     }
-    if (options.numberSections) {
-      args.push("--number-sections");
-    }
-    if (options.embedResources) {
-      args.push("--embed-resources", "--standalone");
-    }
-    if (options.referenceLocation) {
-      args.push("--reference-location", options.referenceLocation);
-    }
-    if (options.figureCaptionPosition) {
-      args.push("--figure-caption-position", options.figureCaptionPosition);
-    }
-    if (options.tableCaptionPosition) {
-      args.push("--table-caption-position", options.tableCaptionPosition);
-    }
+    if (options.numberSections) args.push("--number-sections");
+    if (options.embedResources) args.push("--embed-resources", "--standalone");
+    if (options.referenceLocation) args.push("--reference-location", options.referenceLocation);
+    if (options.figureCaptionPosition) args.push("--figure-caption-position", options.figureCaptionPosition);
+    if (options.tableCaptionPosition) args.push("--table-caption-position", options.tableCaptionPosition);
 
     args.push("-o", dest);
 
     let stderr = "";
     const proc = spawn("pandoc", args);
-    
+
     proc.stderr.on("data", (data: Buffer) => {
       stderr += data.toString();
     });
@@ -127,33 +108,23 @@ async function runPandoc(
     });
 
     proc.on("exit", (code) => {
-      if (code === 0) {
-        resolve({ success: true });
-      } else {
-        resolve({ success: false, error: stderr || `pandoc exited with code ${code}` });
-      }
+      resolve(code === 0 ? { success: true } : { success: false, error: stderr || `pandoc exited with code ${code}` });
     });
   });
 }
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  // Only accept POST
   if (req.method !== "POST") {
     res.status(405).json({ success: false, error: "Method not allowed" });
     return;
   }
 
-  // Parse query params
   const { from, to, toc, tocDepth, numberSections, embedResources, referenceLocation, figureCaptionPosition, tableCaptionPosition } = req.query;
   if (typeof from !== "string" || typeof to !== "string") {
-    res.status(400).json({
-      success: false,
-      error: "Query params 'from' and 'to' are required",
-    });
+    res.status(400).json({ success: false, error: "Query params 'from' and 'to' are required" });
     return;
   }
 
-  // Parse options from query params
   const options: PandocOptions = {
     toc: toc === "true",
     tocDepth: typeof tocDepth === "string" ? parseInt(tocDepth, 10) : undefined,
@@ -164,48 +135,37 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     tableCaptionPosition: typeof tableCaptionPosition === "string" ? tableCaptionPosition : undefined,
   };
 
-  // Parse multipart form
-  const form = new IncomingForm();
-  (form as any).uploadDir = appConfig.uploadDir;
-  (form as any).keepExtensions = true;
-
-  // Track file paths for uploaded files
-  let filePath: string | undefined;
-  let templatePath: string | undefined;
-
-  form.on("fileBegin", (name: string, file: any) => {
-    const ext = extname(file.name);
-    const newName = `${uuidv4()}${ext}`;
-    file.name = newName;
-    file.path = resolve(appConfig.uploadDir, newName);
-    
-    if (name === "file") {
-      filePath = file.path;
-    } else if (name === "template") {
-      templatePath = file.path;
-    }
+  const uploadDir = resolve(process.cwd(), appConfig.uploadDir);
+  const form = formidable({
+    uploadDir,
+    keepExtensions: true,
+    filename: (_name, _ext, part) => {
+      const ext = extname(part.originalFilename || "");
+      return `${uuidv4()}${ext}`;
+    },
   });
 
-  form.parse(req, async (err) => {
-    if (err) {
-      res.status(400).json({ success: false, error: "Failed to parse form data" });
-      return;
-    }
+  try {
+    const [, files] = await form.parse(req);
 
-    if (!filePath) {
-      cleanupFiles(templatePath);
+    const fileArr = files.file;
+    const mainFile = Array.isArray(fileArr) ? fileArr[0] : fileArr;
+    const templateArr = files.template;
+    const templateFile = Array.isArray(templateArr) ? templateArr[0] : templateArr;
+
+    if (!mainFile) {
+      cleanupFiles(templateFile?.filepath);
       res.status(400).json({ success: false, error: "'file' field is required" });
       return;
     }
 
-    // Generate output path
-    const ext = getExtension(to);
-    const outputPath = resolve(appConfig.uploadDir, `${uuidv4()}.${ext}`);
-
-    // Add template to options
+    const filePath = mainFile.filepath;
+    const templatePath = templateFile?.filepath;
     options.templatePath = templatePath;
 
-    // Run pandoc
+    const ext = getExtension(to);
+    const outputPath = resolve(uploadDir, `${uuidv4()}.${ext}`);
+
     const result = await runPandoc(filePath, outputPath, from, to, options);
 
     if (!result.success) {
@@ -214,7 +174,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return;
     }
 
-    // Stream result back
     const mimeType = getMimeType(to);
     const filename = `converted.${ext}`;
 
@@ -224,15 +183,16 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const stream = createReadStream(outputPath);
     stream.pipe(res);
 
-    stream.on("close", () => {
-      cleanupFiles(filePath, templatePath, outputPath);
-    });
-
+    stream.on("close", () => cleanupFiles(filePath, templatePath, outputPath));
     stream.on("error", () => {
       cleanupFiles(filePath, templatePath, outputPath);
-      res.status(500).json({ success: false, error: "Failed to read output file" });
+      if (!res.headersSent) {
+        res.status(500).json({ success: false, error: "Failed to read output file" });
+      }
     });
-  });
+  } catch (err) {
+    res.status(400).json({ success: false, error: "Failed to parse form data" });
+  }
 };
 
 export default handler;

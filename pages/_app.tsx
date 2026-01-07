@@ -1,13 +1,6 @@
-import { Provider as StyletronProvider } from "styletron-react";
-import { LightTheme, BaseProvider } from "baseui";
-import { styletron, debug } from "../lib/styletron";
+import type { AppProps } from "next/app";
+import "../styles/globals.css";
 
-const MyApp = ({ Component, pageProps }) => (
-  <StyletronProvider value={styletron} debug={debug} debugAfterHydration>
-    <BaseProvider theme={LightTheme}>
-      <Component {...pageProps} />
-    </BaseProvider>
-  </StyletronProvider>
-);
-
-export default MyApp;
+export default function App({ Component, pageProps }: AppProps) {
+  return <Component {...pageProps} />;
+}

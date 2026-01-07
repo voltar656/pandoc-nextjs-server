@@ -1,20 +1,23 @@
 import { useCallback } from "react";
-import { NextPage } from "next";
-import Router from "next/router";
+import { useRouter } from "next/router";
 
 import { Layout } from "../components/Layout";
 import { PandocStep } from "../components/Steps";
 import { UploadStep } from "../components/UploadStep";
 
-const Index: NextPage = () => {
-  const handleUpload = useCallback(({ name }) => {
-    Router.push(`/convert/${name}`);
-  }, []);
+export default function Home() {
+  const router = useRouter();
+
+  const handleUpload = useCallback(
+    ({ name }: { name: string }) => {
+      router.push(`/convert/${name}`);
+    },
+    [router]
+  );
+
   return (
     <Layout step={PandocStep.Upload}>
       <UploadStep onUpload={handleUpload} />
     </Layout>
   );
-};
-
-export default Index;
+}

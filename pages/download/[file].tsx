@@ -1,63 +1,50 @@
 import { useCallback } from "react";
-import { GetServerSideProps, NextPage } from "next";
+import { GetServerSideProps } from "next";
 import axios from "axios";
-import { Button } from "baseui/button";
-import { ParagraphMedium, HeadingSmall } from "baseui/typography";
 
 import { Layout } from "../../components/Layout";
 import { PandocStep } from "../../components/Steps";
-
+import { Button, HeadingSmall, Paragraph } from "../../components/ui";
 import appConfig from "../../lib/config";
 import { IStatus } from "../../lib/writeMetaFile";
 
-interface IProps {
-  status: IStatus;
+interface Props {
+  status: IStatus | null;
 }
 
-interface IPageProps {
-  file: string;
-}
-
-const Index: NextPage<IProps> = ({ status }) => {
+export default function DownloadPage({ status }: Props) {
   const handleClick = useCallback(() => {
+    if (!status) return;
     const format = appConfig.formats.find((f) => f.value === status.format);
-    location.href = `/api/download?file=${status.name}&ext=${
-      format.ext || format.value
-    }`;
+    window.location.href = `/api/download?file=${status.name}&ext=${format?.ext || format?.value || status.format}`;
   }, [status]);
 
   return (
     <Layout title="Download" step={PandocStep.Download}>
-      <HeadingSmall marginTop="0">File download</HeadingSmall>
-      <ParagraphMedium padding=".2em">
-        {status ? (
-          <Button onClick={handleClick}>Download the file</Button>
-        ) : (
-          <>File not found.</>
-        )}
-      </ParagraphMedium>
+      <HeadingSmall className="mb-4">File download</HeadingSmall>
+      {status ? (
+        <Button onClick={handleClick}>Download the file</Button>
+      ) : (
+        <Paragraph>File not found.</Paragraph>
+      )}
     </Layout>
   );
-};
+}
 
-export const getServerSideProps: GetServerSideProps<IProps> = async (ctx) => {
+export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   const { file } = ctx.query;
   if (typeof file === "string") {
     try {
       const res = await axios.get("http://127.0.0.1:3000/api/status", {
-        params: {
-          file,
-        },
+        params: { file },
         responseType: "json",
       });
-      if (res.data && res.data.success) {
+      if (res.data?.success) {
         return { props: { status: res.data.status } };
       }
     } catch (err) {
-      // do nothing
+      // ignore
     }
   }
   return { props: { status: null } };
 };
-
-export default Index;

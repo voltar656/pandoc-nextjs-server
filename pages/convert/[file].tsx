@@ -1,76 +1,66 @@
 import { useEffect, useState, useCallback } from "react";
-import { NextPage } from "next";
-import Router, { useRouter } from "next/router";
+import { useRouter } from "next/router";
 import axios from "axios";
-import { useStyletron } from "baseui";
-import { FlexGrid, FlexGridItem } from "baseui/flex-grid";
-import { StyledSpinnerNext as Spinner } from "baseui/spinner";
-import { ParagraphMedium, HeadingSmall } from "baseui/typography";
 
 import { Layout } from "../../components/Layout";
 import { PandocStep } from "../../components/Steps";
 import { UploadStatus } from "../../components/UploadStatus";
-
-import { IStatus } from "../../lib/writeMetaFile";
 import { ScrapboxForm } from "../../components/ScrapboxForm";
+import { Spinner, HeadingSmall, Paragraph } from "../../components/ui";
+import { IStatus } from "../../lib/writeMetaFile";
 
-const Index: NextPage = () => {
-  const [file, setFile] = useState<string>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [polling, setPolling] = useState<boolean>(true);
-  const [status, setStatus] = useState<IStatus>(null);
-  const [css] = useStyletron();
-
+export default function ConvertPage() {
   const router = useRouter();
-  useEffect(() => {
-    if (router.asPath !== router.route) {
-      setFile(router.query.file as string);
-    }
-  }, [router]);
+  const [loading, setLoading] = useState(true);
+  const [polling, setPolling] = useState(true);
+  const [status, setStatus] = useState<IStatus | null>(null);
 
-  const fetch = useCallback(async () => {
-    let status: IStatus;
+  const file = router.query.file as string | undefined;
+
+  const fetchStatus = useCallback(async () => {
+    if (!file) return null;
     try {
       const res = await axios.get("/api/status", {
-        params: {
-          file,
-        },
+        params: { file },
         responseType: "json",
       });
-      if (res.data && res.data.success) {
-        status = res.data.status;
+      if (res.data?.success) {
+        return res.data.status as IStatus;
       }
     } catch (e) {
-      return null;
+      // ignore
     }
-    return status;
+    return null;
   }, [file]);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !polling) {
-      return;
-    }
-    let doFetch = () =>
-      fetch().then((status) => {
-        if (!doFetch || !polling) {
-          return;
-        }
-        setLoading(false);
-        setStatus(status);
-        // Stop polling if scrapbox, success, or error
-        if (status?.scrapbox || status?.success !== undefined) {
-          setPolling(false);
-        } else {
-          setTimeout(doFetch, 1000);
-        }
-      });
-    doFetch();
-    return () => (doFetch = null);
-  }, [fetch, polling]);
+    if (!file || !polling) return;
 
-  const handleDownload = useCallback((name: string) => {
-    Router.push(`/download/${name}`);
-  }, []);
+    let active = true;
+    const poll = async () => {
+      const status = await fetchStatus();
+      if (!active) return;
+      setLoading(false);
+      setStatus(status);
+      if (status?.scrapbox || status?.success !== undefined) {
+        setPolling(false);
+      } else {
+        setTimeout(poll, 1000);
+      }
+    };
+    poll();
+
+    return () => {
+      active = false;
+    };
+  }, [file, polling, fetchStatus]);
+
+  const handleDownload = useCallback(
+    (name: string) => {
+      router.push(`/download/${name}`);
+    },
+    [router]
+  );
 
   const handleSubmit = useCallback(() => {
     setPolling(true);
@@ -79,33 +69,26 @@ const Index: NextPage = () => {
   return (
     <Layout title="Convert" step={PandocStep.Convert}>
       {loading || !status ? (
-        <FlexGrid alignItems="center" justifyContent="center" height="100%">
-          <FlexGridItem>
-            <div className={css({ textAlign: "center" })}>
-              <Spinner />
-            </div>
-          </FlexGridItem>
-        </FlexGrid>
+        <div className="flex items-center justify-center py-12">
+          <Spinner />
+        </div>
       ) : status.scrapbox ? (
         <>
-          <HeadingSmall marginTop="0">Scrapbox options</HeadingSmall>
+          <HeadingSmall className="mb-4">Scrapbox options</HeadingSmall>
           <ScrapboxForm status={status} onSubmit={handleSubmit} />
-          <ParagraphMedium padding=".2em">
-            Specify options for converting Scrapbox pages and click the convert
-            button.
-          </ParagraphMedium>
+          <Paragraph className="mt-4">
+            Specify options for converting Scrapbox pages and click the convert button.
+          </Paragraph>
         </>
       ) : (
         <>
-          <HeadingSmall marginTop="0">File conversion status</HeadingSmall>
+          <HeadingSmall className="mb-4">File conversion status</HeadingSmall>
           <UploadStatus status={status} onDownload={handleDownload} />
-          <ParagraphMedium padding=".2em">
+          <Paragraph className="mt-4">
             Once the file is ready, the button above gets enabled.
-          </ParagraphMedium>
+          </Paragraph>
         </>
       )}
     </Layout>
   );
-};
-
-export default Index;
+}

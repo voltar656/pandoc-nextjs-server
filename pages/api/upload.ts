@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { IncomingForm } from "formidable";
+import formidable from "formidable";
 import { v4 as uuidv4 } from "uuid";
 import { extname, resolve } from "path";
 import { unlink } from "fs";
@@ -15,84 +15,67 @@ export const config = {
 };
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  // use formidable to parse form data
-  const form = new IncomingForm();
-  (form as any).uploadDir = appConfig.uploadDir;
-  (form as any).keepExtensions = true;
-  (form as any).multiples = true;
+  const uploadDir = resolve(process.cwd(), appConfig.uploadDir);
 
-  let originalName: string = "";
-  let mainFilePath: string = "";
-  let mainFileName: string = "";
-  let templatePath: string | undefined;
-
-  form.on("fileBegin", (fieldName: string, file: any) => {
-    const ext = extname(file.name);
-    const name = `${uuidv4()}${ext}`;
-    
-    if (fieldName === "template") {
-      file.name = name;
-      file.path = resolve((form as any).uploadDir, name);
-      templatePath = file.path;
-    } else {
-      // Main file
-      originalName = file.name;
-      file.name = name;
-      file.path = resolve((form as any).uploadDir, name);
-      mainFilePath = file.path;
-      mainFileName = name;
-    }
+  const form = formidable({
+    uploadDir,
+    keepExtensions: true,
+    filename: (_name, _ext, part) => {
+      const ext = extname(part.originalFilename || "");
+      return `${uuidv4()}${ext}`;
+    },
   });
 
-  form.parse(req, (err, fields, filesMap) => {
-    if (err) {
-      res.json({
-        success: false,
-        error: err,
-      });
-      return;
-    }
-    if (!fields || typeof fields.format !== "string") {
-      res.json({
-        success: false,
-        error: "Destination file format not specified",
-      });
-      return;
-    }
-    const format = appConfig.formats.find((f) => f.value === fields.format);
+  try {
+    const [fields, files] = await form.parse(req);
+
+    const format = Array.isArray(fields.format) ? fields.format[0] : fields.format;
     if (!format) {
-      res.json({
-        success: false,
-        error: "Unknown destination file format specified",
-      });
+      res.json({ success: false, error: "Destination file format not specified" });
       return;
     }
 
-    // Get source format (optional)
-    const sourceFormat = typeof fields.sourceFormat === "string" ? fields.sourceFormat : undefined;
-
-    // Get advanced options
-    const toc = fields.toc === "true";
-    const tocDepth = typeof fields.tocDepth === "string" ? parseInt(fields.tocDepth, 10) : undefined;
-    const numberSections = fields.numberSections === "true";
-    const embedResources = fields.embedResources === "true";
-    const referenceLocation = typeof fields.referenceLocation === "string" ? fields.referenceLocation : undefined;
-    const figureCaptionPosition = typeof fields.figureCaptionPosition === "string" ? fields.figureCaptionPosition : undefined;
-    const tableCaptionPosition = typeof fields.tableCaptionPosition === "string" ? fields.tableCaptionPosition : undefined;
-
-    if (!mainFilePath) {
-      res.json({
-        success: false,
-        error: "No file uploaded",
-      });
+    const formatConfig = appConfig.formats.find((f) => f.value === format);
+    if (!formatConfig) {
+      res.json({ success: false, error: "Unknown destination file format specified" });
       return;
     }
 
-    // write meta file
+    // Get uploaded files
+    const uploadedFiles = files["files[0]"] || files.file;
+    const mainFile = Array.isArray(uploadedFiles) ? uploadedFiles[0] : uploadedFiles;
+    const templateFiles = files.template;
+    const templateFile = Array.isArray(templateFiles) ? templateFiles[0] : templateFiles;
+
+    if (!mainFile) {
+      res.json({ success: false, error: "No file uploaded" });
+      return;
+    }
+
+    const mainFilePath = mainFile.filepath;
+    const mainFileName = mainFile.newFilename || "";
+    const originalName = mainFile.originalFilename || "unknown";
+    const templatePath = templateFile?.filepath;
+
+    // Get options from fields
+    const getField = (name: string) => {
+      const val = fields[name];
+      return Array.isArray(val) ? val[0] : val;
+    };
+
+    const sourceFormat = getField("sourceFormat");
+    const toc = getField("toc") === "true";
+    const tocDepth = getField("tocDepth") ? parseInt(getField("tocDepth")!, 10) : undefined;
+    const numberSections = getField("numberSections") === "true";
+    const embedResources = getField("embedResources") === "true";
+    const referenceLocation = getField("referenceLocation");
+    const figureCaptionPosition = getField("figureCaptionPosition");
+    const tableCaptionPosition = getField("tableCaptionPosition");
+
     const status: IStatus = {
       name: mainFileName,
       originalName,
-      format: format.value,
+      format: formatConfig.value,
       sourceFormat,
       templatePath,
       toc,
@@ -104,33 +87,27 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       tableCaptionPosition,
       date: new Date().toISOString(),
     };
-    writeMetaFile(status).then((err) => {
-      // clean up on error
-      if (err) {
-        res.json({
-          success: false,
-          error: "Writing a meta file failed",
-        });
-        unlink(mainFilePath, (_err) => {});
-        if (templatePath) unlink(templatePath, (_err) => {});
-        return;
-      }
 
-      // return the name of the uploaded file
-      res.json({
-        success: true,
-        name: mainFileName,
-      });
+    const err = await writeMetaFile(status);
+    if (err) {
+      res.json({ success: false, error: "Writing a meta file failed" });
+      unlink(mainFilePath, () => {});
+      if (templatePath) unlink(templatePath, () => {});
+      return;
+    }
 
-      // start conversion
-      convert(
-        mainFilePath,
-        `${mainFilePath}.${format.ext || format.value}`,
-        format.value,
-        status
-      );
-    });
-  });
+    res.json({ success: true, name: mainFileName });
+
+    // Start conversion
+    convert(
+      mainFilePath,
+      `${mainFilePath}.${formatConfig.ext || formatConfig.value}`,
+      formatConfig.value,
+      status
+    );
+  } catch (err) {
+    res.json({ success: false, error: "Failed to parse form data" });
+  }
 };
 
 export default handler;

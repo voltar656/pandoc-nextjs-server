@@ -1,20 +1,10 @@
 import { FC } from "react";
-import {
-  HeaderNavigation,
-  ALIGN,
-  StyledNavigationList,
-  StyledNavigationItem,
-} from "baseui/header-navigation";
-import { StyledLink } from "baseui/link";
 
 export const Header: FC = () => {
   return (
-    <HeaderNavigation>
-      <StyledNavigationList $align={ALIGN.left}>
-        <StyledNavigationItem>
-          <StyledLink href="/">pandoc-nextjs-extended</StyledLink>
-        </StyledNavigationItem>
-      </StyledNavigationList>
-    </HeaderNavigation>
+    <div className="mb-6">
+      <h1 className="text-2xl font-bold text-gray-900">Pandoc Server</h1>
+      <p className="text-gray-600">Convert documents between formats</p>
+    </div>
   );
 };

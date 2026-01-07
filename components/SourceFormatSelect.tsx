@@ -1,35 +1,39 @@
-import { FC, useCallback, useState } from "react";
-import { Select, Value, OnChangeParams } from "baseui/select";
-
-import appConfig from "../lib/config";
-
-interface IProps {
-  onSelect(value: ISourceFormat): void;
-}
+import { FC, useCallback } from "react";
+import { Select } from "./ui";
 
 export interface ISourceFormat {
-  id: string;
   value: string;
+  label: string;
 }
 
-export const sourceFormats: ISourceFormat[] = appConfig.sourceFormats;
+export const sourceFormats: ISourceFormat[] = [
+  { value: "markdown", label: "Markdown" },
+  { value: "gfm", label: "GitHub Flavored Markdown" },
+  { value: "html", label: "HTML" },
+  { value: "epub", label: "EPUB" },
+  { value: "docx", label: "Word (.docx)" },
+  { value: "latex", label: "LaTeX" },
+  { value: "rst", label: "reStructuredText" },
+];
 
-export const SourceFormatSelect: FC<IProps> = ({ onSelect }) => {
-  const [value, setValue] = useState<Value>([sourceFormats[0]]);
+interface Props {
+  onSelect: (format: ISourceFormat) => void;
+}
+
+export const SourceFormatSelect: FC<Props> = ({ onSelect }) => {
   const handleChange = useCallback(
-    ({ value: selected }: OnChangeParams) => {
-      setValue(selected);
-      onSelect((selected[0] as unknown) as ISourceFormat);
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const format = sourceFormats.find((f) => f.value === e.target.value);
+      if (format) onSelect(format);
     },
     [onSelect]
   );
+
   return (
     <Select
-      options={sourceFormats}
-      labelKey="id"
-      valueKey="value"
+      options={sourceFormats.map((f) => ({ value: f.value, label: f.label }))}
       onChange={handleChange}
-      value={value}
+      defaultValue={sourceFormats[0].value}
     />
   );
 };

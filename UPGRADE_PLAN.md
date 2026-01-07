@@ -223,3 +223,69 @@ If upgrade fails:
 | **Total** | **2.5 hours** | **5 hours** | **10 hours** |
 
 Most variance depends on baseui upgrade complexity.
+
+---
+
+# Tailwind Migration Plan (Selected Approach)
+
+## Components to Replace
+
+| baseui Component | Replacement |
+|-----------------|-------------|
+| `Button` | Tailwind button |
+| `Checkbox` | Native + Tailwind |
+| `FileUploader` | Custom drag-drop component |
+| `FlexGrid/FlexGridItem` | Tailwind `flex` |
+| `FormControl` | `<label>` + Tailwind |
+| `Grid/Cell` | Tailwind `grid` |
+| `BaseProvider/LightTheme` | Remove |
+| `ListItem/ListItemLabel` | Tailwind `<ul>/<li>` |
+| `HeadingSmall/ParagraphMedium` | Tailwind typography |
+| `ProgressSteps/Step` | Custom stepper |
+| `Select` | Native `<select>` or headless-ui |
+| `StyledLink` | `<a>` + Tailwind |
+| `Spinner` | Tailwind spinner animation |
+| `useStyletron` | Tailwind classes directly |
+| `HeaderNavigation` | Tailwind header |
+
+## Files to Modify
+
+### Remove entirely:
+- `lib/styletron.ts`
+
+### Heavy changes:
+- `pages/_app.tsx` - remove providers
+- `pages/_document.tsx` - remove styletron SSR
+- `components/UploadStep.tsx` - most complex, has FileUploader + many form controls
+- `components/Layout.tsx` - header nav
+
+### Light changes:
+- `components/Header.tsx`
+- `components/FileFormatSelect.tsx`
+- `components/SourceFormatSelect.tsx`
+- `components/Steps.tsx`
+- `components/UploadStatus.tsx`
+- `components/ScrapboxForm.tsx`
+- `pages/convert/[file].tsx`
+- `pages/download/[file].tsx`
+- `pages/index.tsx`
+
+## Execution Order
+
+1. Install Tailwind + configure
+2. Update `_app.tsx` and `_document.tsx`
+3. Create utility components (Button, Select, Spinner, etc.)
+4. Migrate components one by one
+5. Remove baseui/styletron deps
+6. Update package.json for Next.js 15
+7. Test and fix
+
+## New Dependencies
+
+```bash
+npm install tailwindcss postcss autoprefixer
+npm install @headlessui/react  # for accessible Select/Checkbox if needed
+npx tailwindcss init -p
+```
+
+## Estimated Time: 3-4 hours

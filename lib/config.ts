@@ -1,49 +1,40 @@
 import { IScrapboxOptions } from "./scrapbox";
 
-export default {
+export interface IFormat {
+  label: string;
+  value: string;
+  ext?: string;
+  mime?: string;
+}
+
+const config = {
   uploadDir: "uploads",
   sourceFormats: [
-    { id: "Markdown (.md)", value: "markdown" },
-    { id: "GitHub-Flavored Markdown (.md)", value: "gfm" },
-    { id: "HTML (.html)", value: "html" },
-    { id: "EPUB (.epub)", value: "epub" },
-    { id: "Microsoft Word (.docx)", value: "docx" },
-    { id: "LaTeX (.tex)", value: "latex" },
-    { id: "reStructuredText (.rst)", value: "rst" },
+    { label: "Markdown (.md)", value: "markdown" },
+    { label: "GitHub-Flavored Markdown (.md)", value: "gfm" },
+    { label: "HTML (.html)", value: "html" },
+    { label: "EPUB (.epub)", value: "epub" },
+    { label: "Microsoft Word (.docx)", value: "docx" },
+    { label: "LaTeX (.tex)", value: "latex" },
+    { label: "reStructuredText (.rst)", value: "rst" },
   ],
   formats: [
-    { id: "Adobe PDF (.pdf)", value: "pdf", mime: "application/pdf" },
-    { id: "HTML (.html)", value: "html", mime: "text/html" },
-    {
-      id: "GitHub-Flavored Markdown (.md)",
-      value: "gfm",
-      ext: "md",
-      mime: "text/plain",
-    },
-    {
-      id: "Pandoc's Markdown (.md)",
-      value: "markdown",
-      ext: "md",
-      mime: "text/plain",
-    },
-    { id: "reStructuredText (.rst)", value: "rst", mime: "text/plain" },
-    { id: "Rich Text Format (.rtf)", value: "rtf", mime: "application/rtf" },
-    {
-      id: "Microsoft Word (.docx)",
-      value: "docx",
-      mime:
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    },
-  ],
+    { label: "Adobe PDF (.pdf)", value: "pdf", mime: "application/pdf" },
+    { label: "HTML (.html)", value: "html", mime: "text/html" },
+    { label: "GitHub-Flavored Markdown (.md)", value: "gfm", ext: "md", mime: "text/plain" },
+    { label: "Pandoc's Markdown (.md)", value: "markdown", ext: "md", mime: "text/plain" },
+    { label: "reStructuredText (.rst)", value: "rst", mime: "text/plain" },
+    { label: "Rich Text Format (.rtf)", value: "rtf", mime: "application/rtf" },
+    { label: "Microsoft Word (.docx)", value: "docx", mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+  ] as IFormat[],
   scrapbox: {
     options: {
-      // only show `2021-03-30`-like pages
       filter: /^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}$/,
-      // opening Scrapbox tags
       openings: [],
-      // ending Scrapbox tags
       endings: [],
       skipBlankPages: true,
     } as IScrapboxOptions,
   },
 };
+
+export default config;

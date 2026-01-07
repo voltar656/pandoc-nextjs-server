@@ -1,35 +1,41 @@
-import { FC, useCallback, useState } from "react";
-import { Select, Value, OnChangeParams } from "baseui/select";
-
-import appConfig from "../lib/config";
-
-interface IProps {
-  onSelect(value: IFileFormat): void;
-}
+import { FC, useCallback } from "react";
+import { Select } from "./ui";
 
 export interface IFileFormat {
-  id: string;
   value: string;
+  label: string;
+  ext?: string;
 }
 
-export const formats: IFileFormat[] = appConfig.formats;
+export const formats: IFileFormat[] = [
+  { value: "docx", label: "Word (.docx)" },
+  { value: "odt", label: "OpenDocument (.odt)" },
+  { value: "pdf", label: "PDF (.pdf)" },
+  { value: "html", label: "HTML (.html)" },
+  { value: "markdown", label: "Markdown (.md)", ext: "md" },
+  { value: "epub", label: "EPUB (.epub)" },
+  { value: "latex", label: "LaTeX (.tex)", ext: "tex" },
+  { value: "rst", label: "reStructuredText (.rst)" },
+];
 
-export const FileFormatSelect: FC<IProps> = ({ onSelect }) => {
-  const [value, setValue] = useState<Value>([formats[0]]);
+interface Props {
+  onSelect: (format: IFileFormat) => void;
+}
+
+export const FileFormatSelect: FC<Props> = ({ onSelect }) => {
   const handleChange = useCallback(
-    ({ value: selected }: OnChangeParams) => {
-      setValue(selected);
-      onSelect((selected[0] as unknown) as IFileFormat);
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const format = formats.find((f) => f.value === e.target.value);
+      if (format) onSelect(format);
     },
     [onSelect]
   );
+
   return (
     <Select
-      options={formats}
-      labelKey="id"
-      valueKey="value"
+      options={formats.map((f) => ({ value: f.value, label: f.label }))}
       onChange={handleChange}
-      value={value}
+      defaultValue={formats[0].value}
     />
   );
 };

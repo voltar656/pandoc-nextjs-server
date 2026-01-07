@@ -1,61 +1,43 @@
 import { FC, useCallback } from "react";
-import { useStyletron } from "baseui";
-import { Button } from "baseui/button";
-import { ListItem, ListItemLabel } from "baseui/list";
-
-import appConfig from "../lib/config";
+import { Button } from "./ui";
 import { IStatus } from "../lib/writeMetaFile";
 
-interface IProps {
+interface Props {
   status: IStatus;
-  onDownload(name: string): void;
+  onDownload: (name: string) => void;
 }
 
-export const UploadStatus: FC<IProps> = ({
-  status: { name, format, date, success },
-  onDownload,
-}) => {
-  const [css] = useStyletron();
+export const UploadStatus: FC<Props> = ({ status, onDownload }) => {
   const handleClick = useCallback(() => {
-    onDownload(name);
-  }, [status]);
+    onDownload(status.name);
+  }, [onDownload, status.name]);
+
   return (
-    <ul
-      className={css({
-        paddingLeft: 0,
-      })}
-    >
-      <ListItem>
-        <ListItemLabel description="Status">
-          {typeof success === "boolean"
-            ? success
-              ? "Succeeded"
-              : "Failed"
-            : "Processing"}
-        </ListItemLabel>
-      </ListItem>
-      <ListItem>
-        <ListItemLabel description="Date updated">
-          {new Date().toLocaleString()}
-        </ListItemLabel>
-      </ListItem>
-      <ListItem>
-        <ListItemLabel description="Date created">
-          {new Date(date).toLocaleString()}
-        </ListItemLabel>
-      </ListItem>
-      <ListItem>
-        <ListItemLabel description="Destination format">
-          {appConfig.formats.find((f) => f.value === format).id}
-        </ListItemLabel>
-      </ListItem>
-      <ListItem>
-        <ListItemLabel>
-          <Button onClick={handleClick} disabled={!success}>
-            Proceed to download
-          </Button>
-        </ListItemLabel>
-      </ListItem>
-    </ul>
+    <div className="space-y-4">
+      <ul className="space-y-2 text-sm">
+        <li className="flex justify-between py-2 border-b border-gray-100">
+          <span className="text-gray-500">Original file:</span>
+          <span className="font-medium">{status.originalName}</span>
+        </li>
+        <li className="flex justify-between py-2 border-b border-gray-100">
+          <span className="text-gray-500">Target format:</span>
+          <span className="font-medium">{status.format}</span>
+        </li>
+        <li className="flex justify-between py-2 border-b border-gray-100">
+          <span className="text-gray-500">Status:</span>
+          <span className={`font-medium ${status.success ? "text-green-600" : status.error ? "text-red-600" : "text-yellow-600"}`}>
+            {status.success ? "Complete" : status.error ? "Error" : "Converting..."}
+          </span>
+        </li>
+        {status.error && (
+          <li className="py-2 text-red-600 text-sm">
+            {status.error}
+          </li>
+        )}
+      </ul>
+      <Button onClick={handleClick} disabled={!status.success}>
+        {status.success ? "Download" : "Waiting..."}
+      </Button>
+    </div>
   );
 };
