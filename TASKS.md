@@ -1,42 +1,46 @@
 # Tasks
 
-## Priority 1: API Endpoint ✅
+## Completed ✅
 
-- [x] Create `pages/api/convert.ts`
-  - [x] Parse query params (`from`, `to`) - both required
-  - [x] Handle multipart form: `file` (required), `template` (optional)
-  - [x] Write temp files, run pandoc with appropriate args, stream result, cleanup
-  - [x] Support `--reference-doc` for docx/odt templates
-  - [x] Return appropriate Content-Type and Content-Disposition headers
-  - [x] Return JSON error on failure
+### Priority 1: API Endpoint ✅
+- [x] Create `pages/api/convert.ts` - synchronous conversion endpoint
+- [x] Create `pages/api/health.ts` - health check with pandoc version
+- [x] Support query params: `from`, `to`, `toc`, `tocDepth`, `numberSections`, etc.
+- [x] Support multipart form: `file` (required), `template` (optional)
+- [x] Support `--reference-doc` for docx/odt templates
+- [x] Return appropriate Content-Type and Content-Disposition headers
 
-- [x] Create `pages/api/health.ts`
-  - [x] Return status and pandoc version
+### Priority 2: Container Setup ✅
+- [x] Dockerfile using `pandoc/extra` base image
+- [x] Node.js 20+ (native Alpine package)
+- [x] Single port 3000 (Next.js serves both UI and API)
+- [x] No supervisord needed - Next.js handles everything
 
-- [x] Test with curl:
-  - [x] markdown → docx
-  - [x] markdown → docx with template
-  - [x] epub → markdown
-
-## Priority 2: Container Setup
-
-- [ ] Install supervisord in Dockerfile
-- [ ] Create supervisord.conf to manage Next.js on port 3000
-- [ ] Expose port 3000 (API is part of Next.js)
-- [ ] Build and test image
-
-## Priority 3: Web UI Updates ✅
-
+### Priority 3: Web UI Updates ✅
 - [x] Add source format dropdown
-- [x] Add template upload option
-- [x] Keep PDF option (supported)
+- [x] Add destination format dropdown
+- [x] Add template upload option (for docx/odt)
+- [x] Add advanced options (TOC, numbered sections, embed resources, etc.)
+- [x] Add explicit Convert button (two-step: select file, then convert)
 
-## Priority 4: Documentation
+### Priority 4: Documentation ✅
+- [x] Update README.md with API usage examples
+- [x] Update PLANNING.md with architecture notes
 
-- [ ] Update README.md with API usage examples
+### Priority 5: Modernization ✅ (2026-01-07)
+- [x] Upgrade Next.js 10 → 15
+- [x] Upgrade React 17 → 19
+- [x] Replace baseui/styletron with Tailwind CSS
+- [x] Upgrade formidable 1.x → 3.x (async API)
+- [x] Upgrade TypeScript 4.x → 5.x
+- [x] Remove all workarounds (postcss override, openssl-legacy-provider)
+- [x] GitHub Actions workflow for GHCR
 
-## Future
+## Future / Nice to Have
 
 - [ ] Rate limiting
 - [ ] File size limits
-- [ ] Consolidate logging
+- [ ] Configurable pandoc options via environment variables
+- [ ] Support for pandoc filters
+- [ ] Batch conversion endpoint
+- [ ] WebSocket progress updates for large files

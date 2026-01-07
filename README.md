@@ -9,26 +9,39 @@ Based on [arcatdmz/pandoc-nextjs-server](https://github.com/arcatdmz/pandoc-next
 - **Web UI**: Upload, convert, and download files through a browser interface
 - **REST API**: Synchronous conversion endpoint for workflow automation
 - **Template Support**: Use reference documents for consistent DOCX/ODT styling
+- **Advanced Options**: Table of contents, numbered sections, embedded resources
 - **Multiple Formats**: Supports all Pandoc formats (markdown, docx, epub, html, pdf, etc.)
 
 ## Quick Start
 
-```sh
-# Build the image
-docker build -t pandoc-nextjs-extended .
+### Docker (Recommended)
+
+```bash
+# Pull from GitHub Container Registry
+docker pull ghcr.io/voltar656/pandoc-nextjs-server:latest
 
 # Run the container
-docker run -p 3000:3000 -d --name pandoc pandoc-nextjs-extended
+docker run -p 3000:3000 -d --name pandoc ghcr.io/voltar656/pandoc-nextjs-server:latest
 ```
 
-- Web UI: http://localhost:3000
-- API: http://localhost:3000/api/convert
+Or build locally:
+
+```bash
+docker build -t pandoc-server .
+docker run -p 3000:3000 -d pandoc-server
+```
+
+- **Web UI**: http://localhost:3000
+- **API**: http://localhost:3000/api/convert
+- **Health**: http://localhost:3000/api/health
+
+---
 
 ## API Reference
 
 ### Health Check
 
-```sh
+```bash
 GET /api/health
 ```
 
@@ -39,32 +52,44 @@ Response:
 
 ### Convert Document
 
-```sh
-POST /api/convert?from=<format>&to=<format>
+```bash
+POST /api/convert?from=<format>&to=<format>[&options...]
 ```
 
 **Query Parameters:**
-- `from` (required): Source format (e.g., `markdown`, `epub`, `html`, `docx`)
-- `to` (required): Target format (e.g., `docx`, `markdown`, `pdf`, `html`)
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `from` | Yes | Source format (e.g., `markdown`, `epub`, `html`, `docx`) |
+| `to` | Yes | Target format (e.g., `docx`, `markdown`, `pdf`, `html`) |
+| `toc` | No | Enable table of contents (`true`/`false`) |
+| `tocDepth` | No | TOC depth, 1-6 (default: 3) |
+| `numberSections` | No | Number sections (`true`/`false`) |
+| `embedResources` | No | Embed images/resources in output (`true`/`false`) |
+| `referenceLocation` | No | Reference links: `document`, `section`, or `block` |
+| `figureCaptionPosition` | No | Figure captions: `above` or `below` |
+| `tableCaptionPosition` | No | Table captions: `above` or `below` |
 
 **Form Fields:**
-- `file` (required): The file to convert
-- `template` (optional): Reference document for styling (docx/odt output)
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `file` | Yes | The file to convert |
+| `template` | No | Reference document for styling (docx/odt output only) |
 
 **Response:**
-- Success: Binary file with appropriate Content-Type
+- Success: Binary file with appropriate `Content-Type` and `Content-Disposition` headers
 - Error: `{"success": false, "error": "..."}`
 
-### Examples
+---
 
-```sh
+## Examples
+
+### Basic Conversion
+
+```bash
 # Markdown to DOCX
 curl -X POST -F "file=@document.md" \
-  "http://localhost:3000/api/convert?from=markdown&to=docx" \
-  -o output.docx
-
-# Markdown to DOCX with custom template
-curl -X POST -F "file=@document.md" -F "template=@reference.docx" \
   "http://localhost:3000/api/convert?from=markdown&to=docx" \
   -o output.docx
 
@@ -79,16 +104,79 @@ curl -X POST -F "file=@page.html" \
   -o output.pdf
 ```
 
+### With Template
+
+```bash
+# Markdown to DOCX with custom styling
+curl -X POST \
+  -F "file=@document.md" \
+  -F "template=@company-template.docx" \
+  "http://localhost:3000/api/convert?from=markdown&to=docx" \
+  -o styled-output.docx
+```
+
+### With Advanced Options
+
+```bash
+# Markdown to DOCX with TOC and numbered sections
+curl -X POST -F "file=@document.md" \
+  "http://localhost:3000/api/convert?from=markdown&to=docx&toc=true&tocDepth=2&numberSections=true" \
+  -o output.docx
+
+# HTML with embedded resources
+curl -X POST -F "file=@document.md" \
+  "http://localhost:3000/api/convert?from=markdown&to=html&embedResources=true" \
+  -o standalone.html
+```
+
+---
+
 ## Supported Formats
 
-See Pandoc documentation for full list:
-- Input: `pandoc --list-input-formats`
-- Output: `pandoc --list-output-formats`
+See Pandoc documentation for the full list:
 
-Common formats: markdown, gfm, html, docx, epub, pdf, rst, latex, odt, rtf
+```bash
+# List input formats
+pandoc --list-input-formats
+
+# List output formats  
+pandoc --list-output-formats
+```
+
+**Common formats:** markdown, gfm, html, docx, epub, pdf, rst, latex, odt, rtf, plain
+
+---
+
+## Tech Stack
+
+- **Next.js 15** - React framework
+- **React 19** - UI library
+- **Tailwind CSS** - Styling
+- **Pandoc 3.8** - Document conversion (via `pandoc/extra` Docker image)
+- **TypeScript 5** - Type safety
+
+---
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run dev server (requires pandoc installed locally)
+npm run dev
+
+# Build for production
+npm run build
+npm start
+```
+
+> **Note:** Running outside Docker requires pandoc to be installed on your system.
+
+---
 
 ## License
 
 MIT - See [LICENSE](LICENSE)
 
-© 2026 Vikesh Malhi | Based on work by Jun Kato (2020-2021)
+© 2026 | Based on work by Jun Kato (2020-2021)
