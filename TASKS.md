@@ -82,12 +82,12 @@
 
 - [ ] **Refactor API to use JSON options field** - Replace query params with multipart form: `file` (binary) + `options` (JSON object with `from`, `to`, `toc`, etc.); cleaner and more consistent
 
-### Code Quality / DRY (Medium)
+### Code Quality / DRY (Medium) ✅
 
-- [ ] **Consolidate pandoc execution** - `runPandoc()` in `/api/convert.ts` duplicates `pandoc()` in `lib/pandoc.ts`
-- [ ] **Centralize format/MIME mappings** - `mimeTypes` and `extensions` defined in both `/api/convert.ts` and `lib/config.ts`
-- [ ] **Standardize async patterns** - Mixed callbacks, Promises, and async/await; prefer async/await throughout
-- [ ] **Replace sync file operations** - `copyFileSync` in `scrapbox.ts` blocks the event loop
+- [x] **Consolidate pandoc execution** - `lib/pandoc.ts` removed; single `runPandoc()` in `/api/convert.ts`
+- [x] **Centralize format/MIME mappings** - Format config centralized in `lib/config.ts`; `/api/convert.ts` uses helpers
+- [x] **Standardize async patterns** - All code now uses async/await; callbacks only for stream events
+- [x] **Replace sync file operations** - `scrapbox.ts` removed; no sync file operations remain
 
 ### Architecture (Medium)
 
