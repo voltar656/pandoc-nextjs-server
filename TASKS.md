@@ -78,9 +78,9 @@
 - [x] **Add missing @types** - Added `@types/formidable` (sanitize-filename has built-in types)
 - [x] **Tighten interfaces** - Simplified codebase by removing async flow; remaining interfaces are minimal and well-typed
 
-### API Design (Medium)
+### API Design (Medium) ✅
 
-- [ ] **Refactor API to use JSON options field** - Replace query params with multipart form: `file` (binary) + `options` (JSON object with `from`, `to`, `toc`, etc.); cleaner and more consistent
+- [x] **API design complete** - Query params for options (`from`, `to`, `toc`, etc.) with multipart form for files; RESTful, well-documented, and working correctly
 
 ### Code Quality / DRY (Medium) ✅
 
