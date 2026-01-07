@@ -50,7 +50,9 @@ export function startCleanupScheduler(): void {
     cleanupOldFiles();
   }, CLEANUP_INTERVAL_MS);
 
-  console.log(`[cleanup] Scheduler started (interval: ${CLEANUP_INTERVAL_MS / 60000}min, max age: ${MAX_AGE_MS / 60000}min)`);
+  console.log(
+    `[cleanup] Scheduler started (interval: ${CLEANUP_INTERVAL_MS / 60000}min, max age: ${MAX_AGE_MS / 60000}min)`
+  );
 }
 
 export function stopCleanupScheduler(): void {

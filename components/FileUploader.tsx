@@ -1,7 +1,7 @@
 import { useCallback, useState, useRef, DragEvent } from "react";
 
 interface FileUploaderProps {
-  onDrop: (acceptedFiles: File[], rejectedFiles: File[]) => void;
+  onDrop: (_acceptedFiles: File[], _rejectedFiles: File[]) => void;
   onCancel?: () => void;
   onRetry?: () => void;
   progressAmount?: number | null;
@@ -92,9 +92,7 @@ export function FileUploader({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-        isDragging
-          ? "border-blue-500 bg-blue-50"
-          : "border-gray-300 hover:border-gray-400 bg-white"
+        isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400 bg-white"
       }`}
     >
       <input

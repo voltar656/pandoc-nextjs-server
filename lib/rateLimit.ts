@@ -38,10 +38,7 @@ function getClientIP(req: NextApiRequest): string {
   return req.socket?.remoteAddress || "unknown";
 }
 
-export function rateLimit(
-  req: NextApiRequest,
-  res: NextApiResponse
-): boolean {
+export function rateLimit(req: NextApiRequest, res: NextApiResponse): boolean {
   const ip = getClientIP(req);
   const now = Date.now();
 

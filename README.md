@@ -46,8 +46,9 @@ GET /api/health
 ```
 
 Response:
+
 ```json
-{"status": "ok", "pandoc": "3.8.3"}
+{ "status": "ok", "pandoc": "3.8.3" }
 ```
 
 ### Convert Document
@@ -58,26 +59,27 @@ POST /api/convert?from=<format>&to=<format>[&options...]
 
 **Query Parameters:**
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `from` | Yes | Source format (e.g., `markdown`, `epub`, `html`, `docx`) |
-| `to` | Yes | Target format (e.g., `docx`, `markdown`, `pdf`, `html`) |
-| `toc` | No | Enable table of contents (`true`/`false`) |
-| `tocDepth` | No | TOC depth, 1-6 (default: 3) |
-| `numberSections` | No | Number sections (`true`/`false`) |
-| `embedResources` | No | Embed images/resources in output (`true`/`false`) |
-| `referenceLocation` | No | Reference links: `document`, `section`, or `block` |
-| `figureCaptionPosition` | No | Figure captions: `above` or `below` |
-| `tableCaptionPosition` | No | Table captions: `above` or `below` |
+| Parameter               | Required | Description                                              |
+| ----------------------- | -------- | -------------------------------------------------------- |
+| `from`                  | Yes      | Source format (e.g., `markdown`, `epub`, `html`, `docx`) |
+| `to`                    | Yes      | Target format (e.g., `docx`, `markdown`, `pdf`, `html`)  |
+| `toc`                   | No       | Enable table of contents (`true`/`false`)                |
+| `tocDepth`              | No       | TOC depth, 1-6 (default: 3)                              |
+| `numberSections`        | No       | Number sections (`true`/`false`)                         |
+| `embedResources`        | No       | Embed images/resources in output (`true`/`false`)        |
+| `referenceLocation`     | No       | Reference links: `document`, `section`, or `block`       |
+| `figureCaptionPosition` | No       | Figure captions: `above` or `below`                      |
+| `tableCaptionPosition`  | No       | Table captions: `above` or `below`                       |
 
 **Form Fields:**
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `file` | Yes | The file to convert |
-| `template` | No | Reference document for styling (docx/odt output only) |
+| Field      | Required | Description                                           |
+| ---------- | -------- | ----------------------------------------------------- |
+| `file`     | Yes      | The file to convert                                   |
+| `template` | No       | Reference document for styling (docx/odt output only) |
 
 **Response:**
+
 - Success: Binary file with appropriate `Content-Type` and `Content-Disposition` headers
 - Error: `{"success": false, "error": "..."}`
 
@@ -139,7 +141,7 @@ See Pandoc documentation for the full list:
 # List input formats
 pandoc --list-input-formats
 
-# List output formats  
+# List output formats
 pandoc --list-output-formats
 ```
 
@@ -179,4 +181,4 @@ npm start
 
 MIT - See [LICENSE](LICENSE)
 
-© 2026 | Based on work by Jun Kato (2020-2021)
+© 2026 Vikesh Malhi (built with Anthropic)

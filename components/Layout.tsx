@@ -26,7 +26,10 @@ export const Layout: FC<LayoutProps> = ({ title, step, children }) => {
         {/* Header */}
         <header className="bg-white border-b border-gray-200">
           <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-            <Link href="/" className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
+            <Link
+              href="/"
+              className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors"
+            >
               Pandoc Server
             </Link>
           </div>
@@ -42,8 +45,8 @@ export const Layout: FC<LayoutProps> = ({ title, step, children }) => {
                     s.id === step
                       ? "bg-blue-600 text-white"
                       : s.id < step
-                      ? "bg-green-500 text-white"
-                      : "bg-gray-200 text-gray-500"
+                        ? "bg-green-500 text-white"
+                        : "bg-gray-200 text-gray-500"
                   }`}
                 >
                   {s.id < step ? "✓" : idx + 1}
@@ -55,9 +58,7 @@ export const Layout: FC<LayoutProps> = ({ title, step, children }) => {
                 >
                   {s.label}
                 </span>
-                {idx < steps.length - 1 && (
-                  <div className="w-12 h-0.5 mx-4 bg-gray-200" />
-                )}
+                {idx < steps.length - 1 && <div className="w-12 h-0.5 mx-4 bg-gray-200" />}
               </div>
             ))}
           </nav>

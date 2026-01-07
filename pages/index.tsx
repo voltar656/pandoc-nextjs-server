@@ -14,7 +14,7 @@ export default function Home() {
 
   const handleDownload = useCallback(() => {
     if (!result) return;
-    
+
     const url = window.URL.createObjectURL(result.blob);
     const link = document.createElement("a");
     link.href = url;
@@ -33,17 +33,27 @@ export default function Home() {
     return (
       <Layout step={PandocStep.Download}>
         <div className="text-center py-8">
-          <svg className="mx-auto h-16 w-16 text-green-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            className="mx-auto h-16 w-16 text-green-500 mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <HeadingSmall className="mb-2">Conversion Complete!</HeadingSmall>
           <Paragraph className="mb-6">Your file is ready for download.</Paragraph>
-          
+
           <div className="space-y-4">
             <Button onClick={handleDownload} className="w-full max-w-xs">
               Download {result.filename}
             </Button>
-            
+
             <div>
               <button
                 onClick={handleReset}

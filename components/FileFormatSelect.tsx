@@ -19,7 +19,7 @@ export const formats: IFileFormat[] = [
 ];
 
 interface Props {
-  onSelect: (format: IFileFormat) => void;
+  onSelect: (_format: IFileFormat) => void;
 }
 
 export const FileFormatSelect: FC<Props> = ({ onSelect }) => {

@@ -17,7 +17,7 @@ export const sourceFormats: ISourceFormat[] = [
 ];
 
 interface Props {
-  onSelect: (format: ISourceFormat) => void;
+  onSelect: (_format: ISourceFormat) => void;
 }
 
 export const SourceFormatSelect: FC<Props> = ({ onSelect }) => {

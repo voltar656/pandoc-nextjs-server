@@ -7,8 +7,12 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = "primary", size = "default", className = "", children, disabled, ...props }, ref) => {
-    const base = "font-medium rounded transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2";
+  (
+    { variant = "primary", size = "default", className = "", children, disabled, ...props },
+    ref
+  ) => {
+    const base =
+      "font-medium rounded transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2";
     const variants = {
       primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 disabled:bg-blue-300",
       secondary: "bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500",
@@ -105,10 +109,22 @@ export function Spinner({ className = "" }: { className?: string }) {
 }
 
 // Typography
-export function HeadingSmall({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+export function HeadingSmall({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return <h3 className={`text-lg font-semibold text-gray-900 ${className}`}>{children}</h3>;
 }
 
-export function Paragraph({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+export function Paragraph({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return <p className={`text-base text-gray-600 ${className}`}>{children}</p>;
 }

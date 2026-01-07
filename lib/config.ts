@@ -29,7 +29,11 @@ const config = {
     { label: "Pandoc's Markdown (.md)", value: "markdown", ext: "md", mime: "text/plain" },
     { label: "reStructuredText (.rst)", value: "rst", mime: "text/plain" },
     { label: "Rich Text Format (.rtf)", value: "rtf", mime: "application/rtf" },
-    { label: "Microsoft Word (.docx)", value: "docx", mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+    {
+      label: "Microsoft Word (.docx)",
+      value: "docx",
+      mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    },
   ] as IFormat[],
 };
 

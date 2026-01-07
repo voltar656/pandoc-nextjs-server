@@ -1,11 +1,13 @@
 # Pandoc API Extension Plan
 
 ## Goal
+
 Add a synchronous API endpoint for use in workflow pipelines (microservice-style).
 
 ## Current Architecture (v2.0 - Updated 2026-01-07)
 
 ### Stack
+
 - **Next.js 15** with Pages Router
 - **React 19**
 - **Tailwind CSS** for styling
@@ -14,6 +16,7 @@ Add a synchronous API endpoint for use in workflow pipelines (microservice-style
 - **Docker** with `pandoc/extra` base image
 
 ### Single Container Design
+
 - **Port 3000:** Next.js serves both web UI and API
 - No supervisord needed - Next.js handles everything
 - Stateless design - temp files cleaned up after each request
@@ -23,9 +26,11 @@ Add a synchronous API endpoint for use in workflow pipelines (microservice-style
 ## API Endpoints
 
 ### `POST /api/convert`
+
 Synchronous, single-request conversion endpoint.
 
 **Request:**
+
 - Body: Multipart form with `file` field
 - Query params:
   - `from` - Source format (required, e.g. `markdown`, `epub`, `html`)
@@ -41,10 +46,12 @@ Synchronous, single-request conversion endpoint.
   - `template` - Reference doc file (e.g., .docx template for styling)
 
 **Response:**
+
 - Success: Binary file with appropriate Content-Type and Content-Disposition headers
 - Error: JSON `{ "success": false, "error": "..." }`
 
 **Example usage:**
+
 ```bash
 # Markdown to DOCX
 curl -X POST -F "file=@input.md" \
@@ -68,9 +75,11 @@ curl -X POST -F "file=@input.md" \
 ```
 
 ### `GET /api/health`
+
 Health check endpoint.
 
 **Response:**
+
 ```json
 { "status": "ok", "pandoc": "3.8.3" }
 ```
@@ -123,12 +132,12 @@ docker pull ghcr.io/OWNER/pandoc-nextjs-server:latest
 
 ## Original vs Current
 
-| Aspect | Original (v1) | Current (v2) |
-|--------|---------------|---------------|
-| Next.js | 10 | 15 |
-| React | 17 | 19 |
-| UI Library | baseui + styletron | Tailwind CSS |
-| File Upload | formidable 1.x | formidable 3.x |
-| TypeScript | 4.x | 5.x |
-| Node.js | 18 (with hacks) | 20+ (native) |
-| Vulnerabilities | 40+ | 0 |
+| Aspect          | Original (v1)      | Current (v2)   |
+| --------------- | ------------------ | -------------- |
+| Next.js         | 10                 | 15             |
+| React           | 17                 | 19             |
+| UI Library      | baseui + styletron | Tailwind CSS   |
+| File Upload     | formidable 1.x     | formidable 3.x |
+| TypeScript      | 4.x                | 5.x            |
+| Node.js         | 18 (with hacks)    | 20+ (native)   |
+| Vulnerabilities | 40+                | 0              |

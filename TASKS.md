@@ -3,6 +3,7 @@
 ## Completed ✅
 
 ### Priority 1: API Endpoint ✅
+
 - [x] Create `pages/api/convert.ts` - synchronous conversion endpoint
 - [x] Create `pages/api/health.ts` - health check with pandoc version
 - [x] Support query params: `from`, `to`, `toc`, `tocDepth`, `numberSections`, etc.
@@ -11,12 +12,14 @@
 - [x] Return appropriate Content-Type and Content-Disposition headers
 
 ### Priority 2: Container Setup ✅
+
 - [x] Dockerfile using `pandoc/extra` base image
 - [x] Node.js 20+ (native Alpine package)
 - [x] Single port 3000 (Next.js serves both UI and API)
 - [x] No supervisord needed - Next.js handles everything
 
 ### Priority 3: Web UI Updates ✅
+
 - [x] Add source format dropdown
 - [x] Add destination format dropdown
 - [x] Add template upload option (for docx/odt)
@@ -24,10 +27,12 @@
 - [x] Add explicit Convert button (two-step: select file, then convert)
 
 ### Priority 4: Documentation ✅
+
 - [x] Update README.md with API usage examples
 - [x] Update PLANNING.md with architecture notes
 
 ### Priority 5: Modernization ✅ (2026-01-07)
+
 - [x] Upgrade Next.js 10 → 15
 - [x] Upgrade React 17 → 19
 - [x] Replace baseui/styletron with Tailwind CSS
@@ -93,6 +98,7 @@
 - [ ] **API versioning** - No `/api/v1/` prefix; breaking changes affect all consumers
 
 #### Files Removed (Architecture Simplification)
+
 - `pages/api/upload.ts` - replaced by direct `/api/convert` calls
 - `pages/api/status.ts` - no longer needed (sync flow)
 - `pages/api/download.ts` - no longer needed (direct blob download)
@@ -102,7 +108,7 @@
 - `lib/convert.ts` - async conversion logic removed
 - `lib/pandoc.ts` - consolidated into `/api/convert.ts`
 - `lib/writeMetaFile.ts` - meta files no longer used
-- `lib/readMetaFile.ts` - meta files no longer used  
+- `lib/readMetaFile.ts` - meta files no longer used
 - `lib/scrapbox.ts` - legacy feature removed
 - `components/ScrapboxForm.tsx` - legacy feature removed
 - `components/UploadStatus.tsx` - no longer needed (sync flow)
@@ -114,12 +120,12 @@
 - [ ] **Add E2E tests** - Playwright/Cypress for web UI flow
 - [ ] **Add test scripts to package.json** - No `test`, `test:unit`, `test:e2e` scripts
 
-### DevOps / Infrastructure (Medium)
+### DevOps / Infrastructure (Medium) ✅
 
-- [ ] **Add Dockerfile HEALTHCHECK** - Missing health check instruction for orchestrators
-- [ ] **Add graceful shutdown** - No SIGTERM/SIGINT handling; in-flight requests may be dropped
-- [ ] **Add ESLint + Prettier** - No linting or formatting config; add and enforce in CI
-- [ ] **Add pre-commit hooks** - Consider husky + lint-staged for consistent code quality
+- [x] **Add Dockerfile HEALTHCHECK** - Added in Security section
+- [x] **Add graceful shutdown** - Added SIGTERM/SIGINT handlers in `instrumentation.ts`
+- [x] **Add ESLint + Prettier** - Added ESLint 8 with next/core-web-vitals + prettier config; scripts: `lint`, `lint:fix`, `format`, `format:check`
+- [x] **Add pre-commit hooks** - Added husky + lint-staged; runs ESLint and Prettier on staged files
 
 ### Documentation (Low)
 

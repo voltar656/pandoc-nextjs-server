@@ -13,7 +13,7 @@ export interface ConversionResult {
 }
 
 interface IProps {
-  onConvertComplete(result: ConversionResult): void;
+  onConvertComplete(_result: ConversionResult): void;
 }
 
 const referenceLocationOptions = [
@@ -55,19 +55,16 @@ export const UploadStep: FC<IProps> = ({ onConvertComplete }) => {
   const [figureCaptionPosition, setFigureCaptionPosition] = useState("below");
   const [tableCaptionPosition, setTableCaptionPosition] = useState("above");
 
-  const handleDrop = useCallback(
-    (acceptedFiles: File[], rejectedFiles: File[]) => {
-      if (rejectedFiles.length > 0) {
-        setErrorMessage(rejectedFiles.length > 1 ? "Too many files" : "Something wrong happened");
-        return;
-      }
-      if (acceptedFiles.length > 0) {
-        setSelectedFile(acceptedFiles[0]);
-        setErrorMessage("");
-      }
-    },
-    []
-  );
+  const handleDrop = useCallback((acceptedFiles: File[], rejectedFiles: File[]) => {
+    if (rejectedFiles.length > 0) {
+      setErrorMessage(rejectedFiles.length > 1 ? "Too many files" : "Something wrong happened");
+      return;
+    }
+    if (acceptedFiles.length > 0) {
+      setSelectedFile(acceptedFiles[0]);
+      setErrorMessage("");
+    }
+  }, []);
 
   const handleConvert = useCallback(async () => {
     if (!selectedFile) {
@@ -137,7 +134,7 @@ export const UploadStep: FC<IProps> = ({ onConvertComplete }) => {
     } catch (err: any) {
       setConverting(false);
       setProgress(null);
-      
+
       // Try to extract error message from response
       if (err.response?.data instanceof Blob) {
         try {
@@ -151,7 +148,20 @@ export const UploadStep: FC<IProps> = ({ onConvertComplete }) => {
         setErrorMessage(err.response?.data?.error || "Conversion failed");
       }
     }
-  }, [selectedFile, sourceFormat, destFormat, templateFile, toc, tocDepth, numberSections, embedResources, referenceLocation, figureCaptionPosition, tableCaptionPosition, onConvertComplete]);
+  }, [
+    selectedFile,
+    sourceFormat,
+    destFormat,
+    templateFile,
+    toc,
+    tocDepth,
+    numberSections,
+    embedResources,
+    referenceLocation,
+    figureCaptionPosition,
+    tableCaptionPosition,
+    onConvertComplete,
+  ]);
 
   const handleRetry = useCallback(() => {
     setProgress(null);
@@ -175,7 +185,8 @@ export const UploadStep: FC<IProps> = ({ onConvertComplete }) => {
   }, []);
 
   const showTemplateOption = destFormat.value === "docx" || destFormat.value === "odt";
-  const showAdvancedOptions = sourceFormat.value.includes("markdown") || sourceFormat.value === "gfm";
+  const showAdvancedOptions =
+    sourceFormat.value.includes("markdown") || sourceFormat.value === "gfm";
 
   return (
     <div className="space-y-4">
@@ -268,15 +279,30 @@ export const UploadStep: FC<IProps> = ({ onConvertComplete }) => {
         <div className="border-2 border-green-300 rounded-lg p-4 bg-green-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="h-8 w-8 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <div>
                 <p className="font-medium text-gray-900">{selectedFile.name}</p>
                 <p className="text-sm text-gray-500">{(selectedFile.size / 1024).toFixed(1)} KB</p>
               </div>
             </div>
-            <Button variant="tertiary" size="compact" onClick={handleClearFile} disabled={converting}>
+            <Button
+              variant="tertiary"
+              size="compact"
+              onClick={handleClearFile}
+              disabled={converting}
+            >
               Change
             </Button>
           </div>
@@ -293,19 +319,15 @@ export const UploadStep: FC<IProps> = ({ onConvertComplete }) => {
       )}
 
       {/* Error message when file is selected */}
-      {selectedFile && errorMessage && (
-        <div className="text-red-600 text-sm">{errorMessage}</div>
-      )}
+      {selectedFile && errorMessage && <div className="text-red-600 text-sm">{errorMessage}</div>}
 
       {/* Convert Button */}
       <div className="pt-4">
-        <Button
-          onClick={handleConvert}
-          disabled={!selectedFile || converting}
-          className="w-full"
-        >
-          {converting 
-            ? (progress !== null ? `Uploading... ${progress}%` : "Converting...") 
+        <Button onClick={handleConvert} disabled={!selectedFile || converting} className="w-full">
+          {converting
+            ? progress !== null
+              ? `Uploading... ${progress}%`
+              : "Converting..."
             : "Convert"}
         </Button>
       </div>

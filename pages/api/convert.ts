@@ -51,10 +51,7 @@ async function runPandoc(
     const args = [src, "-f", fromFormat];
 
     if (toFormat === "pdf") {
-      args.push(
-        "-V", "geometry:margin=1in",
-        "--pdf-engine=xelatex"
-      );
+      args.push("-V", "geometry:margin=1in", "--pdf-engine=xelatex");
     } else {
       args.push("-t", toFormat);
     }
@@ -70,8 +67,10 @@ async function runPandoc(
     if (options.numberSections) args.push("--number-sections");
     if (options.embedResources) args.push("--embed-resources", "--standalone");
     if (options.referenceLocation) args.push("--reference-location", options.referenceLocation);
-    if (options.figureCaptionPosition) args.push("--figure-caption-position", options.figureCaptionPosition);
-    if (options.tableCaptionPosition) args.push("--table-caption-position", options.tableCaptionPosition);
+    if (options.figureCaptionPosition)
+      args.push("--figure-caption-position", options.figureCaptionPosition);
+    if (options.tableCaptionPosition)
+      args.push("--table-caption-position", options.tableCaptionPosition);
 
     args.push("-o", dest);
 
@@ -87,7 +86,11 @@ async function runPandoc(
     });
 
     proc.on("exit", (code) => {
-      resolve(code === 0 ? { success: true } : { success: false, error: stderr || `pandoc exited with code ${code}` });
+      resolve(
+        code === 0
+          ? { success: true }
+          : { success: false, error: stderr || `pandoc exited with code ${code}` }
+      );
     });
   });
 }
@@ -101,7 +104,17 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return;
   }
 
-  const { from, to, toc, tocDepth, numberSections, embedResources, referenceLocation, figureCaptionPosition, tableCaptionPosition } = req.query;
+  const {
+    from,
+    to,
+    toc,
+    tocDepth,
+    numberSections,
+    embedResources,
+    referenceLocation,
+    figureCaptionPosition,
+    tableCaptionPosition,
+  } = req.query;
   if (typeof from !== "string" || typeof to !== "string") {
     res.status(400).json({ success: false, error: "Query params 'from' and 'to' are required" });
     return;
@@ -125,8 +138,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     numberSections: numberSections === "true",
     embedResources: embedResources === "true",
     referenceLocation: typeof referenceLocation === "string" ? referenceLocation : undefined,
-    figureCaptionPosition: typeof figureCaptionPosition === "string" ? figureCaptionPosition : undefined,
-    tableCaptionPosition: typeof tableCaptionPosition === "string" ? tableCaptionPosition : undefined,
+    figureCaptionPosition:
+      typeof figureCaptionPosition === "string" ? figureCaptionPosition : undefined,
+    tableCaptionPosition:
+      typeof tableCaptionPosition === "string" ? tableCaptionPosition : undefined,
   };
 
   const uploadDir = resolve(process.cwd(), appConfig.uploadDir);

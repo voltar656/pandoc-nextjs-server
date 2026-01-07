@@ -5,7 +5,7 @@ async function getPandocVersion(): Promise<string> {
   return new Promise((resolve) => {
     let output = "";
     const proc = spawn("pandoc", ["--version"]);
-    
+
     proc.stdout.on("data", (data: Buffer) => {
       output += data.toString();
     });
