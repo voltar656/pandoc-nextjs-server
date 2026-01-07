@@ -133,15 +133,6 @@
 - [ ] **Add OpenAPI/Swagger spec** - No machine-readable API documentation
 - [ ] **Document environment variables** - No `.env.example` or env var documentation
 
-### Configuration (Medium)
-
-- [ ] **Environment variable configuration** - Make configurable via env vars: `MAX_FILE_SIZE`, `MAX_TOTAL_FILE_SIZE`, `RATE_LIMIT_REQUESTS`, `RATE_LIMIT_WINDOW_MS`, `CLEANUP_INTERVAL_MS`, `CLEANUP_MAX_AGE_MS`, `PDF_ENGINE`, `PDF_GEOMETRY`
-- [ ] **Add `.env.example`** - Document all available environment variables with defaults
-
-### Observability (Medium)
-
-- [ ] **Add metrics endpoint** - `GET /api/metrics` returning conversion counts, error rates, average duration, active conversions; consider Prometheus format
-
 ### Performance (Low)
 
 - [ ] **Enable response compression** - No gzip/brotli compression configured
