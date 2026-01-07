@@ -133,6 +133,11 @@
 - [ ] **Add OpenAPI/Swagger spec** - No machine-readable API documentation
 - [ ] **Document environment variables** - No `.env.example` or env var documentation
 
+### Simplification (Medium)
+
+- [ ] **Simplify error handling** - Remove `lib/errors.ts` with AppError class and ErrorCode enum; use inline `res.status(4xx).json({ success: false, error: message })` per PLANNING.md
+- [ ] **Simplify logging** - Remove pino/structured logging; use console.log for debugging; remove request ID tracking
+
 ### Performance (Low)
 
 - [ ] **Enable response compression** - No gzip/brotli compression configured
