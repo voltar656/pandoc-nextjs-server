@@ -10,9 +10,8 @@ interface LayoutProps {
 }
 
 const steps = [
-  { id: PandocStep.Upload, label: "Upload" },
-  { id: PandocStep.Convert, label: "Convert" },
-  { id: PandocStep.Download, label: "Download" },
+  { id: PandocStep.Upload, label: "Select & Convert" },
+  { id: PandocStep.Download, label: "Complete" },
 ];
 
 export const Layout: FC<LayoutProps> = ({ title, step, children }) => {

@@ -411,3 +411,53 @@ Identified issues across security, error handling, type safety, code quality, ar
 - `pages/download/[file].tsx` (removed hardcoded localhost)
 - `PLANNING.md` (removed Japanese references)
 - `TASKS.md` (added code review findings, marked security tasks complete)
+
+## 2026-01-07: Architecture Simplification - Unified Conversion Flow
+
+### Summary
+Consolidated two parallel conversion systems (async Web UI vs sync API) into a single synchronous flow.
+
+### Before
+- **Web UI**: Upload → `/api/upload` → poll `/api/status` → `/api/download`
+- **API**: `POST /api/convert` returns file directly
+- Meta files (`.meta.json`) tracked conversion state
+- Scrapbox JSON import feature (legacy)
+
+### After
+- **Both**: Single `POST /api/convert` endpoint
+- Web UI calls API directly, receives blob, triggers browser download
+- No polling, no status tracking, no meta files
+- Simpler 2-step UI: "Select & Convert" → "Complete"
+
+### Benefits
+- Single code path for conversions
+- No orphaned meta files
+- Faster UX (no polling delay)
+- Easier to maintain and test
+- Reduced attack surface
+
+### Files Removed
+- `pages/api/upload.ts`
+- `pages/api/status.ts`
+- `pages/api/download.ts`
+- `pages/api/scrapbox.ts`
+- `pages/convert/[file].tsx`
+- `pages/download/[file].tsx`
+- `lib/convert.ts`
+- `lib/pandoc.ts`
+- `lib/writeMetaFile.ts`
+- `lib/readMetaFile.ts`
+- `lib/scrapbox.ts`
+- `components/ScrapboxForm.tsx`
+- `components/UploadStatus.tsx`
+
+### Files Modified
+- `components/UploadStep.tsx` - calls `/api/convert` directly, handles blob download
+- `components/Layout.tsx` - simplified to 2 steps
+- `components/Steps.tsx` - removed Convert step
+- `pages/index.tsx` - single page flow with completion state
+- `lib/config.ts` - removed Scrapbox config
+
+### API Endpoints (Final)
+- `GET /api/health` - health check with pandoc version
+- `POST /api/convert` - synchronous conversion, returns file blob

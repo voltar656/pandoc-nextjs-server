@@ -1,5 +1,3 @@
-import { IScrapboxOptions } from "./scrapbox";
-
 export interface IFormat {
   label: string;
   value: string;
@@ -33,14 +31,6 @@ const config = {
     { label: "Rich Text Format (.rtf)", value: "rtf", mime: "application/rtf" },
     { label: "Microsoft Word (.docx)", value: "docx", mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
   ] as IFormat[],
-  scrapbox: {
-    options: {
-      filter: /^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}$/,
-      openings: [],
-      endings: [],
-      skipBlankPages: true,
-    } as IScrapboxOptions,
-  },
 };
 
 // Validation helpers

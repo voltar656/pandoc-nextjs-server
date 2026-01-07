@@ -7,13 +7,8 @@ import { IFileFormat, FileFormatSelect, formats } from "./FileFormatSelect";
 import { ISourceFormat, SourceFormatSelect, sourceFormats } from "./SourceFormatSelect";
 import { AxiosProgressEvent } from "axios";
 
-interface IUploadResult {
-  success: boolean;
-  name: string;
-}
-
 interface IProps {
-  onUpload(result: IUploadResult): void;
+  onConvertComplete(): void;
 }
 
 const referenceLocationOptions = [
@@ -36,14 +31,14 @@ const tocDepthOptions = [
   { value: "6", label: "6" },
 ];
 
-export const UploadStep: FC<IProps> = ({ onUpload }) => {
+export const UploadStep: FC<IProps> = ({ onConvertComplete }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [sourceFormat, setSourceFormat] = useState<ISourceFormat>(sourceFormats[0]);
   const [destFormat, setDestFormat] = useState<IFileFormat>(formats[0]);
   const [templateFile, setTemplateFile] = useState<File | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [converting, setConverting] = useState(false);
   const templateInputRef = useRef<HTMLInputElement>(null);
 
   // Advanced options
@@ -69,58 +64,106 @@ export const UploadStep: FC<IProps> = ({ onUpload }) => {
     []
   );
 
-  const handleConvert = useCallback(() => {
+  const handleConvert = useCallback(async () => {
     if (!selectedFile) {
       setErrorMessage("Please select a file first");
       return;
     }
 
-    setUploading(true);
+    setConverting(true);
     setErrorMessage("");
+    setProgress(0);
 
+    // Build query params for /api/convert
+    const params = new URLSearchParams({
+      from: sourceFormat.value,
+      to: destFormat.value,
+    });
+    if (toc) {
+      params.set("toc", "true");
+      params.set("tocDepth", tocDepth);
+    }
+    if (numberSections) params.set("numberSections", "true");
+    if (embedResources) params.set("embedResources", "true");
+    params.set("referenceLocation", referenceLocation);
+    params.set("figureCaptionPosition", figureCaptionPosition);
+    params.set("tableCaptionPosition", tableCaptionPosition);
+
+    // Build form data with file and optional template
     const data = new FormData();
-    data.append("files[0]", selectedFile);
-    data.append("format", destFormat.value);
-    data.append("sourceFormat", sourceFormat.value);
+    data.append("file", selectedFile);
     if (templateFile) {
       data.append("template", templateFile);
     }
-    if (toc) {
-      data.append("toc", "true");
-      data.append("tocDepth", tocDepth);
-    }
-    if (numberSections) data.append("numberSections", "true");
-    if (embedResources) data.append("embedResources", "true");
-    data.append("referenceLocation", referenceLocation);
-    data.append("figureCaptionPosition", figureCaptionPosition);
-    data.append("tableCaptionPosition", tableCaptionPosition);
 
-    axios
-      .post("/api/upload", data, {
-        onUploadProgress: (e: AxiosProgressEvent) => setProgress(Math.round((e.loaded * 100) / (e.total || 1))),
-        responseType: "json",
-      })
-      .then((res) => {
-        setUploading(false);
-        setProgress(null);
-        if (!res?.data?.success) {
-          setErrorMessage(res?.data?.error || "Something wrong happened");
-          return;
-        }
-        onUpload(res.data);
-      })
-      .catch(() => {
-        setUploading(false);
-        setProgress(null);
-        setErrorMessage("Upload failed");
+    try {
+      const response = await axios.post(`/api/convert?${params.toString()}`, data, {
+        onUploadProgress: (e: AxiosProgressEvent) => {
+          const pct = Math.round((e.loaded * 100) / (e.total || 1));
+          setProgress(pct < 100 ? pct : null); // null when upload done, waiting for conversion
+        },
+        responseType: "blob",
       });
-  }, [selectedFile, onUpload, destFormat, sourceFormat, templateFile, toc, tocDepth, numberSections, embedResources, referenceLocation, figureCaptionPosition, tableCaptionPosition]);
+
+      // Check if response is an error JSON
+      const contentType = response.headers["content-type"];
+      if (contentType?.includes("application/json")) {
+        // Error response
+        const text = await response.data.text();
+        const json = JSON.parse(text);
+        setErrorMessage(json.error || "Conversion failed");
+        setConverting(false);
+        setProgress(null);
+        return;
+      }
+
+      // Success - trigger download
+      const blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+
+      // Get filename from Content-Disposition header or generate one
+      const disposition = response.headers["content-disposition"];
+      let filename = `converted.${destFormat.ext || destFormat.value}`;
+      if (disposition) {
+        const match = disposition.match(/filename="?([^"]+)"?/);
+        if (match) filename = match[1];
+      }
+
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      setConverting(false);
+      setProgress(null);
+      onConvertComplete();
+    } catch (err: any) {
+      setConverting(false);
+      setProgress(null);
+      
+      // Try to extract error message from response
+      if (err.response?.data instanceof Blob) {
+        try {
+          const text = await err.response.data.text();
+          const json = JSON.parse(text);
+          setErrorMessage(json.error || "Conversion failed");
+        } catch {
+          setErrorMessage("Conversion failed");
+        }
+      } else {
+        setErrorMessage(err.response?.data?.error || "Conversion failed");
+      }
+    }
+  }, [selectedFile, sourceFormat, destFormat, templateFile, toc, tocDepth, numberSections, embedResources, referenceLocation, figureCaptionPosition, tableCaptionPosition, onConvertComplete]);
 
   const handleRetry = useCallback(() => {
     setProgress(null);
     setErrorMessage("");
     setSelectedFile(null);
-    setUploading(false);
+    setConverting(false);
   }, []);
 
   const handleClearFile = useCallback(() => {
@@ -239,7 +282,7 @@ export const UploadStep: FC<IProps> = ({ onUpload }) => {
                 <p className="text-sm text-gray-500">{(selectedFile.size / 1024).toFixed(1)} KB</p>
               </div>
             </div>
-            <Button variant="tertiary" size="compact" onClick={handleClearFile}>
+            <Button variant="tertiary" size="compact" onClick={handleClearFile} disabled={converting}>
               Change
             </Button>
           </div>
@@ -250,19 +293,26 @@ export const UploadStep: FC<IProps> = ({ onUpload }) => {
           onDrop={handleDrop}
           onRetry={handleRetry}
           progressAmount={progress}
-          progressMessage={progress ? `Uploading... ${progress}% of 100%` : ""}
+          progressMessage={progress !== null ? `Uploading... ${progress}%` : ""}
           errorMessage={errorMessage}
         />
+      )}
+
+      {/* Error message when file is selected */}
+      {selectedFile && errorMessage && (
+        <div className="text-red-600 text-sm">{errorMessage}</div>
       )}
 
       {/* Convert Button */}
       <div className="pt-4">
         <Button
           onClick={handleConvert}
-          disabled={!selectedFile || uploading}
+          disabled={!selectedFile || converting}
           className="w-full"
         >
-          {uploading ? `Converting... ${progress || 0}%` : "Convert"}
+          {converting 
+            ? (progress !== null ? `Uploading... ${progress}%` : "Converting...") 
+            : "Convert & Download"}
         </Button>
       </div>
     </div>

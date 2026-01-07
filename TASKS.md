@@ -86,11 +86,26 @@
 
 ### Architecture (Medium)
 
-- [ ] **Unify conversion flows** - Two parallel systems: Web UI (async polling) vs API (sync); consider consolidating
-- [ ] **Add orphan file cleanup** - No scheduled task to clean stale files in `uploads/`; files accumulate on crashes
+- [x] **Unify conversion flows** - Consolidated to single sync flow; Web UI now calls `/api/convert` directly and triggers browser download; removed async polling, status endpoint, meta files
+- [x] **Add orphan file cleanup** - Completed in Security section (startup + periodic cleanup)
 - [ ] **Make PDF settings configurable** - PDF engine and geometry settings hardcoded; should be env-configurable
 - [ ] **Add concurrency limits** - No cap on parallel pandoc processes; could exhaust system resources
 - [ ] **API versioning** - No `/api/v1/` prefix; breaking changes affect all consumers
+
+#### Files Removed (Architecture Simplification)
+- `pages/api/upload.ts` - replaced by direct `/api/convert` calls
+- `pages/api/status.ts` - no longer needed (sync flow)
+- `pages/api/download.ts` - no longer needed (direct blob download)
+- `pages/api/scrapbox.ts` - legacy feature removed
+- `pages/convert/[file].tsx` - no longer needed (single page flow)
+- `pages/download/[file].tsx` - no longer needed (direct download)
+- `lib/convert.ts` - async conversion logic removed
+- `lib/pandoc.ts` - consolidated into `/api/convert.ts`
+- `lib/writeMetaFile.ts` - meta files no longer used
+- `lib/readMetaFile.ts` - meta files no longer used  
+- `lib/scrapbox.ts` - legacy feature removed
+- `components/ScrapboxForm.tsx` - legacy feature removed
+- `components/UploadStatus.tsx` - no longer needed (sync flow)
 
 ### Testing (High)
 
