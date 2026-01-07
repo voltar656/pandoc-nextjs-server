@@ -7,8 +7,13 @@ import { IFileFormat, FileFormatSelect, formats } from "./FileFormatSelect";
 import { ISourceFormat, SourceFormatSelect, sourceFormats } from "./SourceFormatSelect";
 import { AxiosProgressEvent } from "axios";
 
+export interface ConversionResult {
+  blob: Blob;
+  filename: string;
+}
+
 interface IProps {
-  onConvertComplete(): void;
+  onConvertComplete(result: ConversionResult): void;
 }
 
 const referenceLocationOptions = [
@@ -117,12 +122,6 @@ export const UploadStep: FC<IProps> = ({ onConvertComplete }) => {
         return;
       }
 
-      // Success - trigger download
-      const blob = response.data;
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-
       // Get filename from Content-Disposition header or generate one
       const disposition = response.headers["content-disposition"];
       let filename = `converted.${destFormat.ext || destFormat.value}`;
@@ -131,15 +130,10 @@ export const UploadStep: FC<IProps> = ({ onConvertComplete }) => {
         if (match) filename = match[1];
       }
 
-      link.setAttribute("download", filename);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-
+      // Pass result to parent - don't download yet
       setConverting(false);
       setProgress(null);
-      onConvertComplete();
+      onConvertComplete({ blob: response.data, filename });
     } catch (err: any) {
       setConverting(false);
       setProgress(null);
@@ -312,7 +306,7 @@ export const UploadStep: FC<IProps> = ({ onConvertComplete }) => {
         >
           {converting 
             ? (progress !== null ? `Uploading... ${progress}%` : "Converting...") 
-            : "Convert & Download"}
+            : "Convert"}
         </Button>
       </div>
     </div>
