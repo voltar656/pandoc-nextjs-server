@@ -38,9 +38,81 @@
 
 ## Future / Nice to Have
 
-- [ ] Rate limiting
-- [ ] File size limits
+- [x] Rate limiting (completed in Security section)
+- [x] File size limits (completed in Security section)
 - [ ] Configurable pandoc options via environment variables
 - [ ] Support for pandoc filters
 - [ ] Batch conversion endpoint
 - [ ] WebSocket progress updates for large files
+
+---
+
+## Code Review Findings (Senior Engineer Assessment)
+
+### Security (Critical) ✅
+
+- [x] **Add automatic file cleanup** - Added `lib/cleanup.ts` with startup + periodic cleanup (every 15 min, files > 1 hour old); integrated via `instrumentation.ts`
+- [x] **Use tmpfs for uploads in Docker** - Updated Dockerfile with tmpfs mount instructions and HEALTHCHECK
+- [x] **Add file size limits** - Added `maxFileSize` (50MB) and `maxTotalFileSize` (100MB) to formidable config in both `/api/convert` and `/api/upload`
+- [x] **Validate format parameters** - Added `isValidSourceFormat()` and `isValidDestFormat()` validation in both API endpoints
+- [x] **Add rate limiting** - Added `lib/rateLimit.ts` (30 req/min per IP) to `/api/convert` and `/api/upload`
+- [x] **Remove hardcoded localhost in SSR** - Changed `pages/download/[file].tsx` to use direct file system read via `readMetaFile()` instead of HTTP
+- [x] **Sanitize all file inputs consistently** - Added `sanitize-filename` to `/api/convert.ts` and `/api/upload.ts`
+
+### Error Handling (High)
+
+- [ ] **Standardize error responses** - Inconsistent patterns: some use `res.json({ success: false })`, others `res.status(4xx).json()`
+- [ ] **Add structured logging** - No logging anywhere; add a logger (pino/winston) with request IDs for traceability
+- [ ] **Handle cleanup errors** - `unlink()` callbacks silently ignore errors; should at least log
+- [ ] **Type error catches** - Many `catch (e)` blocks without proper typing (enabled by `strict: false`)
+
+### Type Safety (High)
+
+- [ ] **Enable TypeScript strict mode** - `tsconfig.json` has `strict: false`, disabling critical safety checks
+- [ ] **Eliminate `any` types** - `readMetaFile` returns `Promise<any>`, loses type safety downstream
+- [ ] **Add missing @types** - Missing `@types/formidable` and `@types/sanitize-filename` in devDependencies
+- [ ] **Tighten IStatus interface** - Too many optional fields make state reasoning difficult; consider discriminated unions
+
+### API Design (Medium)
+
+- [ ] **Refactor API to use JSON options field** - Replace query params with multipart form: `file` (binary) + `options` (JSON object with `from`, `to`, `toc`, etc.); cleaner and more consistent
+
+### Code Quality / DRY (Medium)
+
+- [ ] **Consolidate pandoc execution** - `runPandoc()` in `/api/convert.ts` duplicates `pandoc()` in `lib/pandoc.ts`
+- [ ] **Centralize format/MIME mappings** - `mimeTypes` and `extensions` defined in both `/api/convert.ts` and `lib/config.ts`
+- [ ] **Standardize async patterns** - Mixed callbacks, Promises, and async/await; prefer async/await throughout
+- [ ] **Replace sync file operations** - `copyFileSync` in `scrapbox.ts` blocks the event loop
+
+### Architecture (Medium)
+
+- [ ] **Unify conversion flows** - Two parallel systems: Web UI (async polling) vs API (sync); consider consolidating
+- [ ] **Add orphan file cleanup** - No scheduled task to clean stale files in `uploads/`; files accumulate on crashes
+- [ ] **Make PDF settings configurable** - PDF engine and geometry settings hardcoded; should be env-configurable
+- [ ] **Add concurrency limits** - No cap on parallel pandoc processes; could exhaust system resources
+- [ ] **API versioning** - No `/api/v1/` prefix; breaking changes affect all consumers
+
+### Testing (High)
+
+- [ ] **Add unit tests** - Zero test coverage; add Jest/Vitest for lib functions
+- [ ] **Add API integration tests** - Test `/api/convert`, `/api/health` endpoints
+- [ ] **Add E2E tests** - Playwright/Cypress for web UI flow
+- [ ] **Add test scripts to package.json** - No `test`, `test:unit`, `test:e2e` scripts
+
+### DevOps / Infrastructure (Medium)
+
+- [ ] **Add Dockerfile HEALTHCHECK** - Missing health check instruction for orchestrators
+- [ ] **Add graceful shutdown** - No SIGTERM/SIGINT handling; in-flight requests may be dropped
+- [ ] **Add ESLint + Prettier** - No linting or formatting config; add and enforce in CI
+- [ ] **Add pre-commit hooks** - Consider husky + lint-staged for consistent code quality
+
+### Documentation (Low)
+
+- [ ] **Add JSDoc comments** - Functions lack documentation; improves IDE experience and maintainability
+- [ ] **Add OpenAPI/Swagger spec** - No machine-readable API documentation
+- [ ] **Document environment variables** - No `.env.example` or env var documentation
+
+### Performance (Low)
+
+- [ ] **Enable response compression** - No gzip/brotli compression configured
+- [ ] **Consider output caching** - Identical conversions could be cached (with hash-based keys)

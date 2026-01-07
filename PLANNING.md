@@ -117,8 +117,7 @@ docker pull ghcr.io/OWNER/pandoc-nextjs-server:latest
 - Custom endpoint shells out to pandoc via `spawn()`
 - Temp files stored in `uploads/` directory, cleaned up after response
 - Template files uploaded per-request, also cleaned up
-- Full pandoc feature support: PDF (via lualatex), filters, templates
-- PDF uses Japanese document class (`ltjarticle`) by default
+- Full pandoc feature support: PDF (via xelatex), filters, templates
 
 ---
 

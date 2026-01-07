@@ -7,8 +7,14 @@ export interface IFormat {
   mime?: string;
 }
 
+// File upload limits
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_TOTAL_SIZE = 100 * 1024 * 1024; // 100MB (file + template)
+
 const config = {
   uploadDir: "uploads",
+  maxFileSize: MAX_FILE_SIZE,
+  maxTotalFileSize: MAX_TOTAL_SIZE,
   sourceFormats: [
     { label: "Markdown (.md)", value: "markdown" },
     { label: "GitHub-Flavored Markdown (.md)", value: "gfm" },
@@ -36,5 +42,18 @@ const config = {
     } as IScrapboxOptions,
   },
 };
+
+// Validation helpers
+export function isValidSourceFormat(format: string): boolean {
+  return config.sourceFormats.some((f) => f.value === format);
+}
+
+export function isValidDestFormat(format: string): boolean {
+  return config.formats.some((f) => f.value === format);
+}
+
+export function getDestFormat(format: string): IFormat | undefined {
+  return config.formats.find((f) => f.value === format);
+}
 
 export default config;

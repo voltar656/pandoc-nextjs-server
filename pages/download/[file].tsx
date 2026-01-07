@@ -1,12 +1,12 @@
 import { useCallback } from "react";
 import { GetServerSideProps } from "next";
-import axios from "axios";
 
 import { Layout } from "../../components/Layout";
 import { PandocStep } from "../../components/Steps";
 import { Button, HeadingSmall, Paragraph } from "../../components/ui";
 import appConfig from "../../lib/config";
 import { IStatus } from "../../lib/writeMetaFile";
+import { readMetaFile } from "../../lib/readMetaFile";
 
 interface Props {
   status: IStatus | null;
@@ -35,15 +35,11 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   const { file } = ctx.query;
   if (typeof file === "string") {
     try {
-      const res = await axios.get("http://127.0.0.1:3000/api/status", {
-        params: { file },
-        responseType: "json",
-      });
-      if (res.data?.success) {
-        return { props: { status: res.data.status } };
-      }
+      // Read status directly from file system instead of HTTP call
+      const status = await readMetaFile(file);
+      return { props: { status } };
     } catch (err) {
-      // ignore
+      // File not found or invalid
     }
   }
   return { props: { status: null } };

@@ -1,11 +1,13 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import formidable from "formidable";
 import { v4 as uuidv4 } from "uuid";
-import { resolve, extname } from "path";
+import { resolve, extname, basename } from "path";
 import { unlink, createReadStream } from "fs";
 import { spawn } from "child_process";
+import sanitize from "sanitize-filename";
 
-import appConfig from "../../lib/config";
+import appConfig, { isValidSourceFormat, isValidDestFormat, getDestFormat } from "../../lib/config";
+import { rateLimit } from "../../lib/rateLimit";
 
 export const config = {
   api: {
@@ -13,33 +15,12 @@ export const config = {
   },
 };
 
-const mimeTypes: Record<string, string> = {
-  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  odt: "application/vnd.oasis.opendocument.text",
-  pdf: "application/pdf",
-  html: "text/html",
-  markdown: "text/plain",
-  gfm: "text/plain",
-  rst: "text/plain",
-  rtf: "application/rtf",
-  epub: "application/epub+zip",
-  latex: "application/x-latex",
-  txt: "text/plain",
-};
-
-const extensions: Record<string, string> = {
-  markdown: "md",
-  gfm: "md",
-  html: "html",
-  latex: "tex",
-};
-
-function getExtension(format: string): string {
-  return extensions[format] || format;
+function getExtension(format: string, destFormat?: { ext?: string }): string {
+  return destFormat?.ext || format;
 }
 
-function getMimeType(format: string): string {
-  return mimeTypes[format] || "application/octet-stream";
+function getMimeType(destFormat?: { mime?: string }): string {
+  return destFormat?.mime || "application/octet-stream";
 }
 
 function cleanupFiles(...paths: (string | undefined)[]): void {
@@ -71,10 +52,8 @@ async function runPandoc(
 
     if (toFormat === "pdf") {
       args.push(
-        "-V", "documentclass=ltjarticle",
-        "-V", "classoption=a4j",
         "-V", "geometry:margin=1in",
-        "--pdf-engine=lualatex"
+        "--pdf-engine=xelatex"
       );
     } else {
       args.push("-t", toFormat);
@@ -114,6 +93,9 @@ async function runPandoc(
 }
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  // Rate limiting
+  if (!rateLimit(req, res)) return;
+
   if (req.method !== "POST") {
     res.status(405).json({ success: false, error: "Method not allowed" });
     return;
@@ -124,6 +106,18 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     res.status(400).json({ success: false, error: "Query params 'from' and 'to' are required" });
     return;
   }
+
+  // Validate formats against allowed list
+  if (!isValidSourceFormat(from)) {
+    res.status(400).json({ success: false, error: `Invalid source format: ${from}` });
+    return;
+  }
+  if (!isValidDestFormat(to)) {
+    res.status(400).json({ success: false, error: `Invalid destination format: ${to}` });
+    return;
+  }
+
+  const destFormat = getDestFormat(to);
 
   const options: PandocOptions = {
     toc: toc === "true",
@@ -139,8 +133,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const form = formidable({
     uploadDir,
     keepExtensions: true,
+    maxFileSize: appConfig.maxFileSize,
+    maxTotalFileSize: appConfig.maxTotalFileSize,
     filename: (_name, _ext, part) => {
-      const ext = extname(part.originalFilename || "");
+      // Sanitize and generate safe filename
+      const originalName = part.originalFilename || "";
+      const safeName = sanitize(basename(originalName));
+      const ext = extname(safeName);
       return `${uuidv4()}${ext}`;
     },
   });
@@ -163,7 +162,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const templatePath = templateFile?.filepath;
     options.templatePath = templatePath;
 
-    const ext = getExtension(to);
+    const ext = getExtension(to, destFormat);
     const outputPath = resolve(uploadDir, `${uuidv4()}.${ext}`);
 
     const result = await runPandoc(filePath, outputPath, from, to, options);
@@ -174,7 +173,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return;
     }
 
-    const mimeType = getMimeType(to);
+    const mimeType = getMimeType(destFormat);
     const filename = `converted.${ext}`;
 
     res.setHeader("Content-Type", mimeType);

@@ -349,3 +349,65 @@ GHCR image: ghcr.io/voltar656/pandoc-nextjs-server:latest
 5. Advanced options (TOC, numbering, embed)
 6. Error handling edge cases
 7. Deploy to small prod for feedback
+
+## 2026-01-07: Security Hardening
+
+### Summary
+Conducted senior engineer code review and implemented all critical security fixes.
+
+### Code Review
+Identified issues across security, error handling, type safety, code quality, architecture, testing, and documentation. Full findings added to TASKS.md.
+
+### Critical Security Fixes Implemented
+
+1. **Automatic File Cleanup**
+   - Created `lib/cleanup.ts` with startup + periodic cleanup (every 15 min)
+   - Deletes orphaned files older than 1 hour
+   - Integrated via Next.js `instrumentation.ts`
+
+2. **Docker tmpfs Mount**
+   - Updated Dockerfile with tmpfs mount instructions for `/work/uploads`
+   - Added HEALTHCHECK for container orchestrators
+   - Usage: `docker run --tmpfs /work/uploads:rw,noexec,nosuid,size=512m ...`
+
+3. **File Size Limits**
+   - Added `maxFileSize` (50MB) and `maxTotalFileSize` (100MB) to config
+   - Enforced in both `/api/convert` and `/api/upload` endpoints
+
+4. **Format Validation**
+   - Added `isValidSourceFormat()` and `isValidDestFormat()` helpers
+   - Reject invalid formats with 400 status before processing
+
+5. **Rate Limiting**
+   - Created `lib/rateLimit.ts` with 30 requests/min per IP
+   - Returns proper `X-RateLimit-*` headers
+   - Applied to `/api/convert` and `/api/upload`
+
+6. **Removed Hardcoded Localhost**
+   - Fixed `pages/download/[file].tsx` SSR to read directly from filesystem
+   - Eliminates broken behavior in containerized/proxied environments
+
+7. **Consistent Input Sanitization**
+   - Added `sanitize-filename` to `/api/convert.ts`
+   - All file inputs now sanitized consistently
+
+### Other Changes
+
+- Removed Japanese-specific PDF defaults (`ltjarticle`, `a4j`, `lualatex`)
+- Now uses standard `xelatex` with 1-inch margins
+- Created `next.config.js` for Next.js 15 configuration
+
+### Files Changed
+
+- `lib/cleanup.ts` (new)
+- `lib/rateLimit.ts` (new)
+- `lib/config.ts` (added limits + validators)
+- `lib/pandoc.ts` (removed Japanese defaults)
+- `instrumentation.ts` (new)
+- `next.config.js` (new)
+- `Dockerfile` (tmpfs + healthcheck)
+- `pages/api/convert.ts` (security fixes, removed Japanese defaults)
+- `pages/api/upload.ts` (security fixes)
+- `pages/download/[file].tsx` (removed hardcoded localhost)
+- `PLANNING.md` (removed Japanese references)
+- `TASKS.md` (added code review findings, marked security tasks complete)

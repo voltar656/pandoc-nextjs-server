@@ -38,12 +38,8 @@ export async function pandoc(
       if (format === "pdf") {
         args.push(
           "-V",
-          "documentclass=ltjarticle",
-          "-V",
-          "classoption=a4j",
-          "-V",
           "geometry:margin=1in",
-          "--pdf-engine=lualatex"
+          "--pdf-engine=xelatex"
         );
       } else {
         args.push("-t", format);

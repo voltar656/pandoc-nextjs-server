@@ -1,10 +1,12 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import formidable from "formidable";
 import { v4 as uuidv4 } from "uuid";
-import { extname, resolve } from "path";
+import { extname, basename, resolve } from "path";
 import { unlink } from "fs";
+import sanitize from "sanitize-filename";
 
-import appConfig from "../../lib/config";
+import appConfig, { isValidSourceFormat } from "../../lib/config";
+import { rateLimit } from "../../lib/rateLimit";
 import { writeMetaFile, IStatus } from "../../lib/writeMetaFile";
 import { convert } from "../../lib/convert";
 
@@ -15,13 +17,20 @@ export const config = {
 };
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  // Rate limiting
+  if (!rateLimit(req, res)) return;
+
   const uploadDir = resolve(process.cwd(), appConfig.uploadDir);
 
   const form = formidable({
     uploadDir,
     keepExtensions: true,
+    maxFileSize: appConfig.maxFileSize,
+    maxTotalFileSize: appConfig.maxTotalFileSize,
     filename: (_name, _ext, part) => {
-      const ext = extname(part.originalFilename || "");
+      const originalName = part.originalFilename || "";
+      const safeName = sanitize(basename(originalName));
+      const ext = extname(safeName);
       return `${uuidv4()}${ext}`;
     },
   });
@@ -64,6 +73,15 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     };
 
     const sourceFormat = getField("sourceFormat");
+    
+    // Validate source format if provided
+    if (sourceFormat && !isValidSourceFormat(sourceFormat)) {
+      res.status(400).json({ success: false, error: `Invalid source format: ${sourceFormat}` });
+      unlink(mainFilePath, () => {});
+      if (templatePath) unlink(templatePath, () => {});
+      return;
+    }
+
     const toc = getField("toc") === "true";
     const tocDepth = getField("tocDepth") ? parseInt(getField("tocDepth")!, 10) : undefined;
     const numberSections = getField("numberSections") === "true";
