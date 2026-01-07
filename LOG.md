@@ -185,3 +185,48 @@ curl -X POST -F "file=@doc.md" -F "template=@ref.docx" \
 
 ### Live
 https://oboe-alpha.exe.xyz:8000/
+
+## 2026-01-07T00:45:00+00:00
+
+### Summary
+Tooling modernization and GitHub Actions workflow update for GHCR.
+
+### Completed
+- Removed `.vscode/` directory (editor-specific settings)
+- Updated `.github/workflows/deploy.yml` from Azure deployment to GHCR push
+- Fixed Node 18 compatibility issues:
+  - Added `postcss` override (`^8.4.31` → 8.5.6) to fix `ERR_PACKAGE_PATH_NOT_EXPORTED`
+  - Pinned `@types/react` to `17.0.39` (fixes detection bug with Next.js 10)
+- Regenerated `package-lock.json` with modern dependency resolution
+
+### Tooling Status
+| Component | Status | Details |
+|-----------|--------|--------|
+| Node version | ✅ | 18.19.0 (musl build for Alpine) |
+| Package manager | ✅ | npm with `--legacy-peer-deps` |
+| Lockfile | ✅ | Regenerated fresh |
+| PostCSS | ✅ | Override to ^8.4.31 |
+| @types/react | ✅ | Pinned to 17.0.39 |
+| OpenSSL | ✅ | `--openssl-legacy-provider` in Dockerfile |
+
+### New Workflow
+- Triggers on push to `main` or manual dispatch
+- Builds Docker image and pushes to GHCR
+- Tags: `latest` + commit SHA
+- Uses built-in `GITHUB_TOKEN` (no secrets needed)
+
+### Pull Command
+```bash
+docker pull ghcr.io/voltar656/pandoc-nextjs-server:latest
+```
+
+### Files Changed
+- `.vscode/settings.json` - deleted
+- `.github/workflows/deploy.yml` - rewritten for GHCR
+- `package.json` - added postcss override, pinned @types/react
+- `package-lock.json` - regenerated
+
+### Next Steps
+- Push to GitHub to trigger workflow
+- Verify image appears in GitHub Packages
+- Make package public if needed for unauthenticated pulls
