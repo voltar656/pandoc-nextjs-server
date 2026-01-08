@@ -1,4 +1,18 @@
+# Dependencies
 node_modules/
-uploads/**/*
-!uploads/README.md
-.next
+
+# Build output
+.next/
+
+# Uploads (temp files)
+uploads/
+
+# Test artifacts
+test-results/
+playwright-report/
+
+# Project management (local only)
+TASKS.md
+PLANNING.md
+UPGRADE_PLAN.md
+LOG.md
