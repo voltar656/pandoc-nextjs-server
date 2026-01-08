@@ -299,7 +299,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse): Promise<void>
 
     if (!result.success) {
       cleanupFiles(logger, filePath, templatePath, outputPath);
-      sendError(res, AppError.conversionFailed(result.error), logger);
+      // Add hint for YAML parsing errors
+      let errorMsg = result.error;
+      if (errorMsg?.includes("YAML") && !options.noYaml) {
+        errorMsg +=
+          "\n\nTip: Try enabling 'Disable YAML Metadata' option (noYaml=true) if your file has problematic frontmatter.";
+      }
+      sendError(res, AppError.conversionFailed(errorMsg), logger);
       return;
     }
 
