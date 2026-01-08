@@ -13,6 +13,7 @@
  * - toc: Include table of contents (true/false)
  * - tocDepth: TOC depth (1-6)
  * - numberSections: Number section headings (true/false)
+ * - noYaml: Disable YAML metadata parsing (true/false)
  * - embedResources: Embed images/resources in output (true/false)
  * - referenceLocation: Where to place reference links (document/section/block)
  * - figureCaptionPosition: Figure caption position (above/below)
@@ -87,6 +88,7 @@ interface PandocOptions {
   tocDepth?: number;
   numberSections?: boolean;
   embedResources?: boolean;
+  noYaml?: boolean;
   referenceLocation?: string;
   figureCaptionPosition?: string;
   tableCaptionPosition?: string;
@@ -118,7 +120,13 @@ async function runPandoc(
   options: PandocOptions = {}
 ): Promise<PandocResult> {
   return new Promise((resolve) => {
-    const args = [src, "-f", fromFormat];
+    // Build format string with extensions
+    let inputFormat = fromFormat;
+    if (options.noYaml && (fromFormat === "markdown" || fromFormat === "gfm")) {
+      inputFormat = `${fromFormat}-yaml_metadata_block`;
+    }
+
+    const args = [src, "-f", inputFormat];
 
     if (toFormat === "pdf") {
       args.push("-V", "geometry:margin=1in", "--pdf-engine=xelatex");
@@ -232,6 +240,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse): Promise<void>
     tocDepth: parseQueryNumber(req.query.tocDepth),
     numberSections: parseQueryBoolean(req.query.numberSections),
     embedResources: parseQueryBoolean(req.query.embedResources),
+    noYaml: parseQueryBoolean(req.query.noYaml),
     referenceLocation: parseQueryString(req.query.referenceLocation),
     figureCaptionPosition: parseQueryString(req.query.figureCaptionPosition),
     tableCaptionPosition: parseQueryString(req.query.tableCaptionPosition),

@@ -55,6 +55,7 @@ export const UploadStep: FC<IProps> = ({ onConvertComplete }) => {
   const [tocDepth, setTocDepth] = useState("3");
   const [numberSections, setNumberSections] = useState(false);
   const [embedResources, setEmbedResources] = useState(false);
+  const [noYaml, setNoYaml] = useState(false);
   const [referenceLocation, setReferenceLocation] = useState("document");
   const [figureCaptionPosition, setFigureCaptionPosition] = useState("below");
   const [tableCaptionPosition, setTableCaptionPosition] = useState("above");
@@ -92,6 +93,7 @@ export const UploadStep: FC<IProps> = ({ onConvertComplete }) => {
     }
     if (numberSections) params.set("numberSections", "true");
     if (embedResources) params.set("embedResources", "true");
+    if (noYaml) params.set("noYaml", "true");
     params.set("referenceLocation", referenceLocation);
     params.set("figureCaptionPosition", figureCaptionPosition);
     params.set("tableCaptionPosition", tableCaptionPosition);
@@ -162,6 +164,7 @@ export const UploadStep: FC<IProps> = ({ onConvertComplete }) => {
     tocDepth,
     numberSections,
     embedResources,
+    noYaml,
     referenceLocation,
     figureCaptionPosition,
     tableCaptionPosition,
@@ -254,6 +257,11 @@ export const UploadStep: FC<IProps> = ({ onConvertComplete }) => {
               label="Embed Resources"
               checked={embedResources}
               onChange={(e) => setEmbedResources(e.target.checked)}
+            />
+            <Checkbox
+              label="Disable YAML Metadata"
+              checked={noYaml}
+              onChange={(e) => setNoYaml(e.target.checked)}
             />
             <FormControl label="Reference Links Location:">
               <Select
