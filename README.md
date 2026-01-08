@@ -1,8 +1,6 @@
-# pandoc-nextjs-extended
+# pandoc-nextjs-server
 
 A web UI and API for [Pandoc](https://pandoc.org/) document conversion.
-
-Based on [arcatdmz/pandoc-nextjs-server](https://github.com/arcatdmz/pandoc-nextjs-server), extended with a REST API for pipeline integration.
 
 ## Features
 
