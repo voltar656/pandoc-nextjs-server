@@ -1,8 +1,18 @@
+/**
+ * Standardized error handling for API endpoints.
+ *
+ * Provides AppError class for typed errors with HTTP status codes,
+ * ErrorCode enum for machine-readable error types, and sendError()
+ * helper for consistent JSON error responses.
+ *
+ * @module lib/errors
+ */
+
 import { NextApiResponse } from "next";
 import { Logger } from "./logger";
 
 /**
- * Standard error response format
+ * Standard error response format returned by all API endpoints.
  */
 export interface ErrorResponse {
   success: false;
@@ -102,7 +112,16 @@ export class AppError extends Error {
 }
 
 /**
- * Send a standardized error response
+ * Send a standardized JSON error response.
+ *
+ * Handles AppError instances (uses their status code and error code),
+ * regular Error instances (500 with message), and unknown errors (500 generic).
+ * Logs unexpected errors with stack traces.
+ *
+ * @param res - Next.js response object
+ * @param error - The error to send (AppError, Error, or unknown)
+ * @param logger - Optional logger for error logging
+ * @param requestId - Optional request ID to include in response
  */
 export function sendError(
   res: NextApiResponse,
@@ -142,14 +161,18 @@ export function sendError(
 }
 
 /**
- * Type guard to check if an error is an AppError
+ * Type guard to check if an error is an AppError.
+ * @param error - Unknown error to check
+ * @returns True if error is an AppError instance
  */
 export function isAppError(error: unknown): error is AppError {
   return error instanceof AppError;
 }
 
 /**
- * Safely get error message from unknown error
+ * Safely extract an error message from an unknown error type.
+ * @param error - Unknown error (could be Error, string, or anything)
+ * @returns The error message string, or "Unknown error" if not extractable
  */
 export function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {

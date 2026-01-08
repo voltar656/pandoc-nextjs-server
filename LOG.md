@@ -711,3 +711,66 @@ Implemented comprehensive error handling and enabled TypeScript strict mode.
   "msg": "Conversion parameters"
 }
 ```
+
+---
+
+## 2025-01-07: Testing Infrastructure & Documentation
+
+### Tasks Completed
+
+1. **Documentation tasks**
+   - Added `.env.example` documenting `LOG_LEVEL` and `NODE_ENV` environment variables
+   - Added JSDoc comments to all lib files (`config.ts`, `errors.ts`, `logger.ts`, `rateLimit.ts`, `cleanup.ts`)
+   - Added JSDoc comments to API handlers (`/api/convert`, `/api/health`)
+
+2. **Testing infrastructure**
+   - Set up Vitest for unit and integration tests
+   - Set up Playwright for E2E tests
+   - Added test scripts to `package.json`
+
+3. **Tasks removed (not applicable)**
+   - Performance: Response compression - not beneficial for already-compressed document formats
+   - Performance: Output caching - rejected for security (avoid retaining user documents)
+   - Architecture: API versioning - not needed (single integrated UI + API)
+   - Architecture: Concurrency limits - not needed (~3 concurrent users expected)
+   - Architecture: PDF settings configurable - PDF not primary use case
+
+### Test Coverage
+
+| Suite       | Tests  | Passed | Skipped | Failed |
+| ----------- | ------ | ------ | ------- | ------ |
+| Unit        | 36     | 36     | 0       | 0      |
+| Integration | 13     | 8      | 5       | 0      |
+| E2E         | 13     | 11     | 2       | 0      |
+| **Total**   | **62** | **55** | **7**   | **0**  |
+
+**Skipped tests**: 7 tests require pandoc to be installed. They are skipped on this VM but will run in Docker where pandoc is available.
+
+### Files Added
+
+- `.env.example` - Environment variable documentation
+- `vitest.config.mts` - Vitest configuration
+- `playwright.config.ts` - Playwright configuration
+- `tests/unit/config.test.ts` - Config validation tests (11 tests)
+- `tests/unit/errors.test.ts` - Error handling tests (20 tests)
+- `tests/unit/rateLimit.test.ts` - Rate limiting tests (5 tests)
+- `tests/integration/health.test.ts` - Health endpoint tests (3 tests)
+- `tests/integration/convert.test.ts` - Convert endpoint tests (10 tests)
+- `tests/e2e/conversion.spec.ts` - Full UI flow tests (13 tests)
+- `tests/fixtures/sample.md` - Test fixture file
+
+### Test Scripts
+
+```bash
+npm run test           # Run unit + integration tests
+npm run test:watch     # Watch mode
+npm run test:unit      # Unit tests only
+npm run test:integration  # Integration tests only
+npm run test:e2e       # Playwright E2E tests
+npm run test:all       # All tests including E2E
+```
+
+### Remaining Tasks
+
+- **Future/Nice to Have**: Configurable pandoc options via env vars, pandoc filters, batch conversion, WebSocket progress
+- **Documentation**: OpenAPI/Swagger spec (if external API consumers needed)

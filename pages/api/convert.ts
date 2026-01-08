@@ -1,3 +1,28 @@
+/**
+ * Document conversion API endpoint.
+ *
+ * POST /api/convert?from=FORMAT&to=FORMAT
+ *
+ * Accepts multipart form data with:
+ * - file (required): The document to convert
+ * - template (optional): Reference document for docx/odt styling
+ *
+ * Query parameters:
+ * - from: Source format (markdown, gfm, html, epub, docx, latex, rst)
+ * - to: Destination format (pdf, html, gfm, markdown, rst, rtf, docx)
+ * - toc: Include table of contents (true/false)
+ * - tocDepth: TOC depth (1-6)
+ * - numberSections: Number section headings (true/false)
+ * - embedResources: Embed images/resources in output (true/false)
+ * - referenceLocation: Where to place reference links (document/section/block)
+ * - figureCaptionPosition: Figure caption position (above/below)
+ * - tableCaptionPosition: Table caption position (above/below)
+ *
+ * Returns the converted file as a download with appropriate Content-Type.
+ *
+ * @module pages/api/convert
+ */
+
 import { NextApiRequest, NextApiResponse } from "next";
 import formidable, { File as FormidableFile } from "formidable";
 import { v4 as uuidv4 } from "uuid";
@@ -16,20 +41,33 @@ import { rateLimit } from "../../lib/rateLimit";
 import { createRequestLogger, Logger } from "../../lib/logger";
 import { AppError, sendError, getErrorMessage } from "../../lib/errors";
 
+/** Disable Next.js body parsing to handle multipart form data with formidable */
 export const config = {
   api: {
     bodyParser: false,
   },
 };
 
+/**
+ * Get file extension for a format.
+ * Uses the format's configured extension, falling back to the format name.
+ */
 function getExtension(format: string, destFormat?: IFormat): string {
   return destFormat?.ext ?? format;
 }
 
+/**
+ * Get MIME type for a format.
+ * Falls back to application/octet-stream for unknown formats.
+ */
 function getMimeType(destFormat?: IFormat): string {
   return destFormat?.mime ?? "application/octet-stream";
 }
 
+/**
+ * Delete temporary files, logging any errors.
+ * Silently ignores undefined paths.
+ */
 function cleanupFiles(logger: Logger, ...paths: (string | undefined)[]): void {
   for (const p of paths) {
     if (p) {
@@ -42,6 +80,7 @@ function cleanupFiles(logger: Logger, ...paths: (string | undefined)[]): void {
   }
 }
 
+/** Options passed to pandoc for conversion */
 interface PandocOptions {
   templatePath?: string;
   toc?: boolean;
@@ -53,11 +92,23 @@ interface PandocOptions {
   tableCaptionPosition?: string;
 }
 
+/** Result from a pandoc conversion attempt */
 interface PandocResult {
   success: boolean;
   error?: string;
 }
 
+/**
+ * Execute pandoc to convert a document.
+ *
+ * @param logger - Logger for this request
+ * @param src - Path to source file
+ * @param dest - Path for output file
+ * @param fromFormat - Pandoc source format
+ * @param toFormat - Pandoc destination format
+ * @param options - Additional conversion options
+ * @returns Promise resolving to success/failure with optional error message
+ */
 async function runPandoc(
   logger: Logger,
   src: string,

@@ -1,11 +1,28 @@
+/**
+ * Automatic cleanup of old uploaded files.
+ *
+ * Runs on server startup and periodically (every 15 minutes) to delete
+ * files older than 1 hour from the uploads directory. This ensures
+ * user documents are not retained longer than necessary.
+ *
+ * @module lib/cleanup
+ */
+
 import { readdir, stat, unlink } from "fs/promises";
 import { join } from "path";
 import appConfig from "./config";
 import logger from "./logger";
 
-const MAX_AGE_MS = 60 * 60 * 1000; // 1 hour
-const CLEANUP_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
+/** Maximum age before a file is deleted (1 hour) */
+const MAX_AGE_MS = 60 * 60 * 1000;
 
+/** Interval between cleanup runs (15 minutes) */
+const CLEANUP_INTERVAL_MS = 15 * 60 * 1000;
+
+/**
+ * Scan the uploads directory and delete files older than MAX_AGE_MS.
+ * Skips README.md and .gitkeep files.
+ */
 async function cleanupOldFiles(): Promise<void> {
   const uploadDir = appConfig.uploadDir;
   const now = Date.now();
@@ -38,6 +55,12 @@ async function cleanupOldFiles(): Promise<void> {
 
 let cleanupInterval: NodeJS.Timeout | null = null;
 
+/**
+ * Start the background cleanup scheduler.
+ *
+ * Runs an immediate cleanup on startup, then schedules periodic cleanup.
+ * Safe to call multiple times (subsequent calls are no-ops).
+ */
 export function startCleanupScheduler(): void {
   if (cleanupInterval) return; // Already running
 
@@ -60,6 +83,11 @@ export function startCleanupScheduler(): void {
   );
 }
 
+/**
+ * Stop the background cleanup scheduler.
+ *
+ * Called during graceful shutdown to clean up the interval timer.
+ */
 export function stopCleanupScheduler(): void {
   if (cleanupInterval) {
     clearInterval(cleanupInterval);

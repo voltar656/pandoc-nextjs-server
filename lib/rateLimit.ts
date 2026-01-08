@@ -1,3 +1,15 @@
+/**
+ * In-memory rate limiting for API endpoints.
+ *
+ * Limits requests per IP address using a sliding window. Rate limit
+ * state resets on server restart. Adds standard rate limit headers
+ * to responses (X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset).
+ *
+ * Current limits: 30 requests per minute per IP.
+ *
+ * @module lib/rateLimit
+ */
+
 import { NextApiRequest, NextApiResponse } from "next";
 import { AppError, sendError } from "./errors";
 
@@ -39,6 +51,22 @@ function getClientIP(req: NextApiRequest): string {
   return req.socket?.remoteAddress ?? "unknown";
 }
 
+/**
+ * Apply rate limiting to an API request.
+ *
+ * Call at the start of an API handler. If the limit is exceeded,
+ * sends a 429 response and returns false. Always sets rate limit headers.
+ *
+ * @param req - Next.js API request object
+ * @param res - Next.js API response object
+ * @returns True if request is allowed, false if rate limited (response already sent)
+ *
+ * @example
+ * ```ts
+ * if (!rateLimit(req, res)) return;
+ * // ... handle request
+ * ```
+ */
 export function rateLimit(req: NextApiRequest, res: NextApiResponse): boolean {
   const ip = getClientIP(req);
   const now = Date.now();

@@ -1,7 +1,14 @@
+/**
+ * Destination format configuration for pandoc conversion.
+ */
 export interface IFormat {
+  /** Display label for UI */
   label: string;
+  /** Pandoc format identifier */
   value: string;
+  /** File extension (defaults to value if not specified) */
   ext?: string;
+  /** MIME type for Content-Type header */
   mime?: string;
 }
 
@@ -37,15 +44,29 @@ const config = {
   ] as IFormat[],
 };
 
-// Validation helpers
+/**
+ * Check if a format string is a valid source format for pandoc input.
+ * @param format - The format identifier to validate
+ * @returns True if the format is in the allowed source formats list
+ */
 export function isValidSourceFormat(format: string): boolean {
   return config.sourceFormats.some((f) => f.value === format);
 }
 
+/**
+ * Check if a format string is a valid destination format for pandoc output.
+ * @param format - The format identifier to validate
+ * @returns True if the format is in the allowed destination formats list
+ */
 export function isValidDestFormat(format: string): boolean {
   return config.formats.some((f) => f.value === format);
 }
 
+/**
+ * Get the full format configuration for a destination format.
+ * @param format - The format identifier to look up
+ * @returns The format configuration, or undefined if not found
+ */
 export function getDestFormat(format: string): IFormat | undefined {
   return config.formats.find((f) => f.value === format);
 }

@@ -93,9 +93,6 @@
 
 - [x] **Unify conversion flows** - Consolidated to single sync flow; Web UI now calls `/api/convert` directly and triggers browser download; removed async polling, status endpoint, meta files
 - [x] **Add orphan file cleanup** - Completed in Security section (startup + periodic cleanup)
-- [ ] **Make PDF settings configurable** - PDF engine and geometry settings hardcoded; should be env-configurable
-- [ ] **Add concurrency limits** - No cap on parallel pandoc processes; could exhaust system resources
-- [ ] **API versioning** - No `/api/v1/` prefix; breaking changes affect all consumers
 
 #### Files Removed (Architecture Simplification)
 
@@ -113,12 +110,12 @@
 - `components/ScrapboxForm.tsx` - legacy feature removed
 - `components/UploadStatus.tsx` - no longer needed (sync flow)
 
-### Testing (High)
+### Testing (High) ✅
 
-- [ ] **Add unit tests** - Zero test coverage; add Jest/Vitest for lib functions
-- [ ] **Add API integration tests** - Test `/api/convert`, `/api/health` endpoints
-- [ ] **Add E2E tests** - Playwright/Cypress for web UI flow
-- [ ] **Add test scripts to package.json** - No `test`, `test:unit`, `test:e2e` scripts
+- [x] **Add unit tests** - Added Vitest tests for `lib/config.ts`, `lib/errors.ts`, `lib/rateLimit.ts` (36 tests)
+- [x] **Add API integration tests** - Tests for `/api/convert` and `/api/health` endpoints (13 tests, 5 skipped without pandoc)
+- [x] **Add E2E tests** - Playwright tests for web UI flow (13 tests, 2 skipped without pandoc)
+- [x] **Add test scripts to package.json** - Added `test`, `test:watch`, `test:unit`, `test:integration`, `test:e2e`, `test:all`
 
 ### DevOps / Infrastructure (Medium) ✅
 
@@ -129,11 +126,10 @@
 
 ### Documentation (Low)
 
-- [ ] **Add JSDoc comments** - Functions lack documentation; improves IDE experience and maintainability
+- [x] **Add JSDoc comments** - Added module-level and function-level JSDoc to all lib files and API handlers
 - [ ] **Add OpenAPI/Swagger spec** - No machine-readable API documentation
-- [ ] **Document environment variables** - No `.env.example` or env var documentation
+- [x] **Document environment variables** - Added `.env.example` with LOG_LEVEL and NODE_ENV
 
-### Performance (Low)
+### Performance
 
-- [ ] **Enable response compression** - No gzip/brotli compression configured
-- [ ] **Consider output caching** - Identical conversions could be cached (with hash-based keys)
+_No tasks - compression not beneficial for already-compressed document formats; caching rejected for security (avoid retaining user documents)._

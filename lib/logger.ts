@@ -1,8 +1,21 @@
+/**
+ * Structured logging using pino.
+ *
+ * Provides a base logger and request-scoped child loggers with
+ * automatic request ID tracking and client IP extraction.
+ *
+ * Configuration via environment variables:
+ * - LOG_LEVEL: trace | debug | info | warn | error | fatal (default: info)
+ * - NODE_ENV: set to "development" for pretty-printed output
+ *
+ * @module lib/logger
+ */
+
 import pino from "pino";
 import { NextApiRequest } from "next";
 import { v4 as uuidv4 } from "uuid";
 
-// Configure base logger
+// Configure base logger with pretty printing in development
 const logger = pino({
   level: process.env.LOG_LEVEL || "info",
   ...(process.env.NODE_ENV === "development"
@@ -22,7 +35,13 @@ const logger = pino({
 export type Logger = pino.Logger;
 
 /**
- * Create a child logger with request context
+ * Create a child logger with request context.
+ *
+ * Extracts or generates a request ID, and captures the HTTP method,
+ * path, and client IP for all log entries.
+ *
+ * @param req - Next.js API request object
+ * @returns A pino child logger with request context bound
  */
 export function createRequestLogger(req: NextApiRequest): Logger {
   const requestId = (req.headers["x-request-id"] as string | undefined) || uuidv4();

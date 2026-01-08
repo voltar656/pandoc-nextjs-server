@@ -1,3 +1,18 @@
+/**
+ * Health check API endpoint.
+ *
+ * GET /api/health
+ *
+ * Returns server health status and pandoc version.
+ * Used by container orchestrators (Docker HEALTHCHECK, Kubernetes probes).
+ *
+ * Response:
+ * - 200: { status: "ok", pandoc: "X.Y.Z" }
+ * - 503: { status: "degraded", pandoc: "unavailable" }
+ *
+ * @module pages/api/health
+ */
+
 import { NextApiRequest, NextApiResponse } from "next";
 import { spawn } from "child_process";
 import { createRequestLogger } from "../../lib/logger";
@@ -7,6 +22,10 @@ interface HealthResponse {
   pandoc: string;
 }
 
+/**
+ * Get the installed pandoc version by running `pandoc --version`.
+ * @returns Version string (e.g., "3.1.2"), "unknown", or "unavailable"
+ */
 async function getPandocVersion(): Promise<string> {
   return new Promise((resolve) => {
     let output = "";
