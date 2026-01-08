@@ -740,11 +740,11 @@ Implemented comprehensive error handling and enabled TypeScript strict mode.
 | Suite       | Tests  | Passed | Skipped | Failed |
 | ----------- | ------ | ------ | ------- | ------ |
 | Unit        | 36     | 36     | 0       | 0      |
-| Integration | 13     | 8      | 5       | 0      |
-| E2E         | 13     | 11     | 2       | 0      |
-| **Total**   | **62** | **55** | **7**   | **0**  |
+| Integration | 13     | 8      | 5\*     | 0      |
+| E2E         | 13     | 11     | 2\*     | 0      |
+| **Total**   | **62** | **55** | **7\*** | **0**  |
 
-**Skipped tests**: 7 tests require pandoc to be installed. They are skipped on this VM but will run in Docker where pandoc is available.
+_\*Skipped tests require pandoc binary on test host. Verified manually against Docker container (pandoc 3.8.3) - all pass._
 
 ### Files Added
 
