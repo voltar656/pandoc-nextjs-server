@@ -9,6 +9,7 @@ export interface IFileFormat {
 
 export const formats: IFileFormat[] = [
   { value: "docx", label: "Word (.docx)" },
+  { value: "pptx", label: "PowerPoint (.pptx)" },
   { value: "odt", label: "OpenDocument (.odt)" },
   { value: "pdf", label: "PDF (.pdf)" },
   { value: "html", label: "HTML (.html)" },

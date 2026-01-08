@@ -41,6 +41,11 @@ const config = {
       value: "docx",
       mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     },
+    {
+      label: "Microsoft PowerPoint (.pptx)",
+      value: "pptx",
+      mime: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    },
   ] as IFormat[],
 };
 

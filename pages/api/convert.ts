@@ -5,7 +5,7 @@
  *
  * Accepts multipart form data with:
  * - file (required): The document to convert
- * - template (optional): Reference document for docx/odt styling
+ * - template (optional): Reference document for docx/odt/pptx styling
  *
  * Query parameters:
  * - from: Source format (markdown, gfm, html, epub, docx, latex, rst)
@@ -126,7 +126,10 @@ async function runPandoc(
       args.push("-t", toFormat);
     }
 
-    if (options.templatePath && (toFormat === "docx" || toFormat === "odt")) {
+    if (
+      options.templatePath &&
+      (toFormat === "docx" || toFormat === "odt" || toFormat === "pptx")
+    ) {
       args.push("--reference-doc", options.templatePath);
     }
 

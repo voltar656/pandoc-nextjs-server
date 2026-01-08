@@ -189,7 +189,8 @@ export const UploadStep: FC<IProps> = ({ onConvertComplete }) => {
     if (templateInputRef.current) templateInputRef.current.value = "";
   }, []);
 
-  const showTemplateOption = destFormat.value === "docx" || destFormat.value === "odt";
+  const showTemplateOption =
+    destFormat.value === "docx" || destFormat.value === "odt" || destFormat.value === "pptx";
   const showAdvancedOptions =
     sourceFormat.value.includes("markdown") || sourceFormat.value === "gfm";
 

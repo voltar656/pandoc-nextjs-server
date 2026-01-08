@@ -22,6 +22,7 @@ describe("config", () => {
       expect(isValidDestFormat("pdf")).toBe(true);
       expect(isValidDestFormat("html")).toBe(true);
       expect(isValidDestFormat("docx")).toBe(true);
+      expect(isValidDestFormat("pptx")).toBe(true);
       expect(isValidDestFormat("markdown")).toBe(true);
     });
 
