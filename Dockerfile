@@ -28,8 +28,7 @@ RUN addgroup -S app && adduser -S app -G app
 WORKDIR /work
 
 # Copy only the built artifacts and pruned production dependencies
-COPY --from=builder --chown=app:app /work/.next       ./.next
-COPY --from=builder --chown=app:app /work/public      ./public
+COPY --from=builder --chown=app:app /work/.next        ./.next
 COPY --from=builder --chown=app:app /work/node_modules ./node_modules
 COPY --from=builder --chown=app:app /work/package.json ./package.json
 COPY --from=builder --chown=app:app /work/next.config.js ./next.config.js
