@@ -23,7 +23,7 @@ unit-tests:
     - apk add --no-cache git
     - npm ci
   script:
-    - npm run test
+    - npm run test:unit
   cache:
     key:
       files:
